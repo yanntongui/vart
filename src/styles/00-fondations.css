@@ -1,0 +1,193 @@
+        :root {
+            /* === REFONTE « Apple moderne » — palette iOS sombre === */
+            --bg-primary: #000000;
+            --bg-secondary: #1c1c1e;
+            --bg-sidebar: #050507;
+            --bg-input: #2c2c2e;
+            --bg-hover: rgba(255,255,255,0.08);
+            --bg-active: rgba(163,181,101,0.18);
+            --text-primary: #f5f5f7;
+            --text-secondary: #98989d;
+            --text-muted: #6e6e73;
+            --accent: #a3b565;
+            --accent2: #ff9f0a;
+            --danger: #ff453a;
+            --success: #30d158;
+            --border: rgba(255,255,255,0.12);
+            --shadow: rgba(0,0,0,0.55);
+            --modal-bg: #1c1c1e;
+            --canvas-bg: #0a0a0c;
+            --transcript-user: rgba(163,181,101,0.26);
+            --transcript-ai: rgba(255,255,255,0.07);
+            /* Apple HIG : le voile d'une modale doit laisser deviner le contenu
+               derriere (le blur fait le travail de separation), pas l'occulter. */
+            --scrim: rgba(0,0,0,0.35);
+            /* Courbe « ressort amorti critique » (damping 1.0, sans rebond) :
+               approximation web des animations systeme Apple. Reservee aux
+               transitions interactives ; les overshoots sont gardes pour les
+               seuls moments de joie (splash). Valeur non-couleur : :root suffit. */
+            --spring: cubic-bezier(0.32, 0.72, 0, 1);
+            /* Fond des avatars « sans image » = couleur de fond de génération
+               d'avatar (par défaut ou dernière choisie). Piloté par JS
+               (applyAvatarColors). --avatar-fg s'adapte à la luminance du fond
+               pour rester lisible quelle que soit la couleur choisie. Ces deux
+               variables sont volontairement indépendantes du thème. */
+            --avatar-bg: #3A4256;
+            --avatar-fg: rgba(255,255,255,0.62);
+            /* === Design tokens refonte === */
+            --font-stack: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --radius-s: 10px;
+            --radius-m: 14px;
+            --radius-l: 20px;
+            --radius-xl: 28px;
+            --shadow-card: 0 1px 2px rgba(0,0,0,0.5), 0 10px 28px rgba(0,0,0,0.35);
+            --shadow-card-hover: 0 2px 6px rgba(0,0,0,0.5), 0 20px 48px rgba(0,0,0,0.5);
+            --shadow-pop: 0 6px 24px rgba(0,0,0,0.45), 0 28px 80px rgba(0,0,0,0.5);
+            --accent-glow: rgba(163,181,101,0.35);
+            --brand-gradient: linear-gradient(135deg, #a3b565 0%, #6e8c2a 100%);
+            --glass-bg: rgba(28,28,30,0.72);
+            --glass-border: rgba(255,255,255,0.14);
+        }
+
+        [data-theme="light"] {
+            /* === REFONTE « Apple moderne » — palette iOS claire === */
+            --bg-primary: #f5f5f7;
+            --bg-secondary: #ffffff;
+            --bg-sidebar: #fbfbfd;
+            --bg-input: rgba(118,118,128,0.12);
+            --bg-hover: rgba(0,0,0,0.05);
+            --bg-active: rgba(107,142,35,0.12);
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-muted: #aeaeb2;
+            --accent: #6b8e23;
+            --accent2: #ff9500;
+            --danger: #ff3b30;
+            --success: #34c759;
+            --border: rgba(0,0,0,0.08);
+            --shadow: rgba(0,0,0,0.10);
+            --modal-bg: #ffffff;
+            --canvas-bg: #f0f0f2;
+            --transcript-user: rgba(107,142,35,0.16);
+            --transcript-ai: rgba(0,0,0,0.05);
+            /* Voile plus leger en theme clair : un scrim trop sombre sur fond
+               clair donne une impression de « panne » plutot que de focus. */
+            --scrim: rgba(0,0,0,0.22);
+            /* === Design tokens refonte (variantes claires) === */
+            --shadow-card: 0 1px 2px rgba(0,0,0,0.04), 0 10px 28px rgba(0,0,0,0.06);
+            --shadow-card-hover: 0 2px 6px rgba(0,0,0,0.06), 0 20px 48px rgba(0,0,0,0.12);
+            --shadow-pop: 0 6px 24px rgba(0,0,0,0.10), 0 28px 80px rgba(0,0,0,0.16);
+            --accent-glow: rgba(107,142,35,0.30);
+            --brand-gradient: linear-gradient(135deg, #7a9a2e 0%, #556b1a 100%);
+            --glass-bg: rgba(255,255,255,0.72);
+            --glass-border: rgba(0,0,0,0.06);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            overflow: hidden;
+            transition: background 0.3s, color 0.3s, grid-template-columns 0.3s;
+            position: relative;
+        }
+
+        body.sidebar-collapsed {
+            grid-template-columns: 0px 1fr;
+        }
+
+        #splashScreen {
+            position: fixed;
+            inset: 0;
+            z-index: 100000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-primary);
+            transition: opacity 0.55s ease, visibility 0.55s ease;
+        }
+        #splashScreen.splash-done {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .splash-inner {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+        .splash-logo {
+            position: relative;
+            width: 104px;
+            height: 104px;
+            opacity: 0;
+            transform: scale(0.6);
+            animation: splashLogoIn 0.7s cubic-bezier(0.2, 0.85, 0.3, 1.12) 0.1s forwards;
+        }
+        /* Halo doux derrière le logo (teinte accent, mais l'effet repose sur la
+           luminance — reste discret et lisible en clair comme en sombre). */
+        .splash-logo::before {
+            content: '';
+            position: absolute;
+            inset: -38%;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--accent) 0%, transparent 62%);
+            opacity: 0;
+            filter: blur(8px);
+            z-index: -1;
+            animation: splashGlow 1.7s ease 0.3s both;
+        }
+        .splash-logo svg { width: 100%; height: 100%; display: block; }
+        .splash-word {
+            display: flex;
+            font-size: 2.6rem;
+            font-weight: 700;
+            letter-spacing: 0.24em;
+            color: var(--text-primary);
+            padding-left: 0.24em; /* compense le letter-spacing pour un centrage optique */
+        }
+        .splash-word span {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(16px);
+            animation: splashLetterIn 0.5s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+            animation-delay: calc(0.42s + var(--l) * 0.08s);
+        }
+        .splash-credit {
+            font-size: 0.8rem;
+            letter-spacing: 0.14em;
+            color: var(--text-secondary);
+            opacity: 0;
+            animation: splashCreditIn 0.6s ease 0.9s forwards;
+        }
+        @keyframes splashLogoIn {
+            0%   { opacity: 0; transform: scale(0.6) translateY(6px); }
+            60%  { opacity: 1; }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes splashLetterIn { to { opacity: 1; transform: translateY(0); } }
+        @keyframes splashCreditIn { to { opacity: 0.85; } }
+        @keyframes splashGlow {
+            0%   { opacity: 0; }
+            45%  { opacity: 0.22; }
+            100% { opacity: 0.12; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .splash-logo,
+            .splash-word span,
+            .splash-credit,
+            .splash-logo::before {
+                animation: none !important;
+                opacity: 1 !important;
+                transform: none !important;
+            }
+            .splash-logo::before { opacity: 0.12 !important; }
+        }
+

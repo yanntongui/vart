@@ -1,0 +1,982 @@
+        /* Zone centrale — plein écran, pas de scroll, l'orb prend toute la hauteur dispo */
+        #conversationBody {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: flex-start;
+            padding: 16px 24px 18px;
+            gap: 12px;
+            min-height: 0;
+        }
+
+        /*
+           Bulle (orb) au centre + ligne d'onde
+           Textes en gros superposés (pas de bulles)
+        */
+        /* Orb (bulle) du persona/IA — occupe tout l'espace dispo, fond transparent */
+        #aiOrbWrap {
+            position: relative;
+            width: 100%;
+            max-width: none;
+            flex: 1;
+            min-height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            overflow: visible;
+        }
+
+        #aiOrbCanvas {
+            position: relative;
+            z-index: 1;
+            display: block;
+            width: 450px;
+            height: 450px;
+            max-width: 100%;
+            max-height: 100%;
+            background: transparent;
+        }
+
+        /* Ligne d'onde (wavy line) – réagit au micro de l'utilisateur
+           On déborde du padding latéral de #conversationBody pour aller bord à bord. */
+        #userWaveWrap {
+            width: auto;
+            max-width: none;
+            height: 110px;
+            position: relative;
+            top: -25px; /* lifte le trait visible sans toucher la mise en page flex
+                          (donc l'orb au-dessus et le texte IA ne bougent pas) */
+            flex-shrink: 0;
+            margin-left: -24px;
+            margin-right: -24px;
+        }
+        @media (max-width: 600px) {
+            #userWaveWrap { margin-left: -12px; margin-right: -12px; top: -10px; }
+        }
+
+        #userWaveCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Texte IA — gros texte centré, superposé sur le bas de l'orb */
+        #aiLiveText {
+            position: absolute;
+            bottom: 14%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 92%;
+            max-width: 920px;
+            overflow: visible;
+            text-align: center;
+            font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+            font-size: clamp(1.5rem, 2.4vw, 2.3rem);
+            font-weight: 300;
+            line-height: 1.4;
+            color: #fff;
+            text-shadow: 0 4px 28px rgba(0,0,0,0.95), 0 0 10px rgba(0,0,0,0.7);
+            pointer-events: none;
+            z-index: 5;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        #aiLiveText.visible { opacity: 1; }
+
+        /* En mode clair : texte foncé sans ombre lourde (sinon shadow noire trop visible
+           sur fond clair). Un léger halo blanc adoucit le bord sans alourdir. */
+        [data-theme="light"] #aiLiveText {
+            color: var(--text-primary);
+            text-shadow: 0 1px 6px rgba(255, 255, 255, 0.7);
+        }
+
+        /* Animation magique char-par-char (blur → net) */
+        #aiLiveText .ai-char {
+            opacity: 0;
+            filter: blur(10px);
+            animation: aiCharFadeIn 0.25s ease forwards;
+        }
+        @keyframes aiCharFadeIn {
+            to { opacity: 1; filter: blur(0); }
+        }
+
+        /* Texte utilisateur — couleur amber identique à la ligne d'onde, centré
+           verticalement entre le trait visible de l'onde et les boutons du bas.
+           On utilise `position: relative` + `top` négatif pour le remonter sans
+           altérer la mise en page flex (sinon l'orb au-dessus grandit et le texte
+           IA descend). Cf. aussi `margin-bottom` négatif sur #userWaveWrap pour
+           remonter la ligne et libérer plus de place au texte. */
+        #userLiveText {
+            width: 100%;
+            text-align: center;
+            font-size: clamp(1.05rem, 1.7vw, 1.4rem);
+            font-weight: 400;
+            color: rgba(253, 230, 138, 1); /* amber clair en mode sombre */
+            /* Halo orange identique à celui de la ligne d'onde (shadowBlur 10
+               + rgba(245,158,11,0.55)) — donne au texte la même chaleur perçue
+               que la ligne, sinon le texte paraît plus pâle à RGB égal. */
+            text-shadow: 0 0 10px rgba(245, 158, 11, 0.55);
+            padding: 0 28px;
+            min-height: 1.6em;
+            position: relative;
+            top: -40px; /* recentre le texte entre le trait visible et les boutons */
+            opacity: 0;
+            transition: opacity 0.35s ease;
+            flex-shrink: 0;
+        }
+        #userLiveText span {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2; /* jusqu'à 2 lignes, puis ellipsis */
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        #userLiveText.visible { opacity: 1; }
+
+        /* En mode clair uniquement : bascule sur le bleu --accent (couleur
+           du bouton « + Nouvelle discussion »). En mode sombre on garde
+           l'amber clair défini ci-dessus. */
+        [data-theme="light"] #userLiveText {
+            color: var(--accent);
+        }
+
+        /* Glow central radial qui change de couleur selon l'état (déconnecté → gris,
+           connecté + silencieux → bleu, IA parle → violet). Identique au composant
+           central de la version React. */
+        #centralGlow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px;
+            height: 800px;
+            max-width: 110vw;
+            max-height: 110vh;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.2;
+            background-color: #27272a; /* zinc-800 par défaut */
+            transition: background-color 1s;
+            pointer-events: none;
+            z-index: 0;
+        }
+        #centralGlow.connected { background-color: #2563eb; } /* blue-600 */
+        #centralGlow.speaking  { background-color: #9333ea; } /* purple-600 */
+        /* Mode clair : glow plus discret, et au repos une teinte claire (pas le
+           zinc foncé) pour ne pas assombrir le fond autour de l'orb. */
+        [data-theme="light"] #centralGlow { opacity: 0.1; background-color: #c7d2fe; } /* indigo-200 */
+        [data-theme="light"] #centralGlow.connected { background-color: #60a5fa; } /* blue-400 */
+        [data-theme="light"] #centralGlow.speaking  { background-color: #c084fc; } /* purple-400 */
+
+        /* Bouton principal Initialiser/Déconnecter — style glass-panel pill (réf React) */
+        .connect-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 14px 32px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: transform 0.25s, background 0.25s, border-color 0.25s, color 0.25s;
+            font-family: inherit;
+        }
+        .connect-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: scale(1.04);
+        }
+        .connect-btn:active { transform: scale(0.96); }
+        .connect-btn.connected:hover {
+            background: rgba(239, 83, 80, 0.1);
+            border-color: rgba(239, 83, 80, 0.3);
+        }
+        .connect-btn.connecting {
+            opacity: 0.65;
+            pointer-events: none;
+        }
+        .connect-btn-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+        }
+        .connect-btn-icon svg { width: 20px; height: 20px; display: none; }
+        .connect-btn .icon-mic { display: block; }
+        .connect-btn.connected .icon-mic { display: none; }
+        .connect-btn.connected .icon-stop { display: block; width: 14px; height: 14px; color: rgba(248, 113, 113, 1); }
+        .connect-btn.connecting .icon-mic,
+        .connect-btn.connecting .icon-stop { display: none; }
+        .connect-btn.connecting .icon-spin {
+            display: block;
+            animation: connectBtnSpin 0.9s linear infinite;
+        }
+        @keyframes connectBtnSpin { to { transform: rotate(360deg); } }
+        .connect-btn-label {
+            font-size: 0.72rem;
+            font-weight: 500;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+        }
+        [data-theme="light"] .connect-btn {
+            background: rgba(0, 0, 0, 0.03);
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        [data-theme="light"] .connect-btn:hover {
+            background: rgba(0, 0, 0, 0.06);
+        }
+
+        /* Canvas viz utilisateur conservé (réutilisé par le mode Transcripteur) */
+        .viz-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .viz-container canvas {
+            background: transparent;
+            width: 100%;
+            max-width: 260px;
+            aspect-ratio: 1;
+        }
+
+        #userViz {
+            display: none;
+        }
+
+        #controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 13px 36px;
+            border: none;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            /* Courbe spring : le relâchement suit la physique, pas un easing linéaire. */
+            transition: all 0.25s var(--spring);
+            letter-spacing: 0.02em;
+        }
+
+        .btn:hover { transform: scale(1.03); }
+        /* Apple §1 : le feedback vit au PRESSER (pointer-down), en 100 ms —
+           attendre le relâchement donne une interface « morte ». */
+        .btn:active { transform: scale(0.97); transition-duration: 100ms; }
+
+        .btn-start {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 2px 12px rgba(79,195,247,0.25);
+        }
+
+        .btn-stop {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            box-shadow: none;
+        }
+
+        .btn-stop:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .btn-mute {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 0;
+        }
+
+        .btn-mute:hover { background: var(--bg-hover); border-color: var(--text-muted); }
+
+        .btn-mute.muted {
+            background: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+
+        /* Barre d'état / session info */
+        #sessionBar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            width: 100%;
+            max-width: 800px;
+            padding: 8px 16px;
+            border-radius: 10px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            transition: background 0.3s;
+        }
+
+        #sessionBar .session-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        #sessionBar .session-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        #sessionBar .session-dot.live {
+            background: var(--success);
+            box-shadow: 0 0 6px var(--success);
+            animation: dotPulse 1.5s infinite;
+        }
+
+        @keyframes dotPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        #status {
+            font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+            font-size: 0.62rem;
+            font-weight: 400;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            text-align: center;
+            min-height: 1em;
+            opacity: 0.7;
+            margin-top: 4px;
+            display: none; /* caché par défaut — les info "Prêt / IA parle" ne s'affichent plus en bas */
+        }
+        #status.error { display: block; color: var(--danger); opacity: 1; }
+
+        #sessionBar { margin: 0 auto; }
+
+        /* Cache le bouton mute du header — remplacé par le bouton en bas */
+        #personaHeader > #controls > #muteBtn { display: none !important; }
+
+        /* Conteneur des deux boutons (Démarrer + Mute) côte à côte */
+        .bottom-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        /* Bouton "Couper le micro" — même style glass-panel que le bouton principal,
+           toujours dans le layout (visibility) pour éviter tout saut de hauteur. */
+        #bottomMuteBtn {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px 22px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.72rem;
+            font-weight: 500;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: transform 0.25s, background 0.25s, border-color 0.25s, color 0.25s;
+        }
+        #bottomMuteBtn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: scale(1.04);
+        }
+        #bottomMuteBtn:active { transform: scale(0.96); }
+        #bottomMuteBtn.muted {
+            background: rgba(239, 83, 80, 0.12);
+            border-color: rgba(239, 83, 80, 0.4);
+            color: var(--danger);
+        }
+        #bottomMuteBtn.muted:hover {
+            background: rgba(239, 83, 80, 0.18);
+            border-color: rgba(239, 83, 80, 0.55);
+        }
+        #bottomMuteBtn.visible { display: inline-flex; }
+        #bottomMuteBtn .icon { display: inline-flex; width: 18px; height: 18px; }
+        #bottomMuteBtn .icon svg { width: 18px; height: 18px; display: none; }
+        #bottomMuteBtn .icon svg.icon-mic-on { display: block; }
+        #bottomMuteBtn.muted .icon svg.icon-mic-on { display: none; }
+        #bottomMuteBtn.muted .icon svg.icon-mic-off { display: block; }
+        [data-theme="light"] #bottomMuteBtn {
+            background: rgba(0, 0, 0, 0.03);
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        [data-theme="light"] #bottomMuteBtn:hover { background: rgba(0, 0, 0, 0.06); }
+        /* La règle du thème clair ci-dessus a la même spécificité que
+           #bottomMuteBtn.muted et venait après : l'état « micro coupé »
+           perdait son fond et sa bordure en thème clair. */
+        [data-theme="light"] #bottomMuteBtn.muted {
+            background: rgba(239, 83, 80, 0.12);
+            border-color: rgba(239, 83, 80, 0.45);
+        }
+        [data-theme="light"] #bottomMuteBtn.muted:hover {
+            background: rgba(239, 83, 80, 0.18);
+            border-color: rgba(239, 83, 80, 0.6);
+        }
+
+        #visionBtn {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px 22px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.72rem;
+            font-weight: 500;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: transform 0.25s, background 0.25s, border-color 0.25s, color 0.25s;
+        }
+        #visionBtn.visible { display: inline-flex; }
+        #visionBtn:hover { background: rgba(255, 255, 255, 0.08); transform: scale(1.04); }
+        #visionBtn:active { transform: scale(0.96); }
+        /* Partage en cours : l'état ne repose PAS sur la teinte. Fond
+           nettement plus clair, bordure pleine, graisse renforcée, libellé
+           qui change (« Caméra active » / « Écran partagé ») et icône œil
+           ouvert au lieu d'œil barré. */
+        #visionBtn.active {
+            background: rgba(255, 255, 255, 0.16);
+            border-color: rgba(255, 255, 255, 0.55);
+            font-weight: 700;
+        }
+        #visionBtn .icon { display: inline-flex; width: 18px; height: 18px; }
+        #visionBtn .icon svg { width: 18px; height: 18px; display: block; }
+        /* Vision impossible avec ce modèle : le bouton reste en place, grisé,
+           et explique pourquoi au survol (data-tip). Pas d'attribut disabled,
+           sinon le navigateur avalerait l'événement de survol. */
+        #visionBtn.is-unavailable {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        #visionBtn.is-unavailable:hover {
+            background: rgba(255, 255, 255, 0.03);
+            transform: none;
+        }
+        [data-theme="light"] #visionBtn.is-unavailable:hover { background: rgba(0, 0, 0, 0.03); }
+        [data-theme="light"] #visionBtn {
+            background: rgba(0, 0, 0, 0.03);
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        [data-theme="light"] #visionBtn:hover { background: rgba(0, 0, 0, 0.06); }
+        [data-theme="light"] #visionBtn.active {
+            background: rgba(0, 0, 0, 0.12);
+            border-color: rgba(0, 0, 0, 0.5);
+        }
+        .viewing-history #visionBtn { display: none !important; }
+
+        /* Menu des sources : deux bulles EMPILÉES dans la même colonne —
+           bulle 1 = les sources, bulle 2 = le surcoût (seulement si le
+           modèle facture les images). Même largeur, 8 px entre les deux. */
+        .vision-menu {
+            position: fixed;
+            z-index: 260;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 296px;
+        }
+        .vision-bubble {
+            padding: 8px;
+            background: var(--modal-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            box-shadow: 0 12px 32px var(--shadow);
+        }
+        .vision-bubble-title {
+            padding: 6px 10px 8px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+        .vision-src {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px 12px;
+            border: none;
+            border-radius: 10px;
+            background: none;
+            color: var(--text-primary);
+            font: inherit;
+            font-size: 0.95rem;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+        .vision-src:hover { background: var(--bg-hover); }
+        .vision-src.is-active { background: var(--bg-active); font-weight: 700; }
+        .vision-src .icon { display: inline-flex; width: 18px; height: 18px; flex: 0 0 auto; color: var(--text-secondary); }
+        .vision-src .icon svg { width: 18px; height: 18px; }
+        .vision-src.is-active .icon { color: var(--text-primary); }
+        .vision-src-text { min-width: 0; }
+        .vision-src-sub {
+            display: block;
+            margin-top: 2px;
+            font-size: 0.75rem;
+            font-weight: 400;
+            color: var(--text-secondary);
+            line-height: 1.35;
+        }
+        /* « Arrêter le partage » : ligne PLEINE, détachée des trois sources
+           par un fond franc et une bordure — repérable au contraste, pas
+           seulement à la teinte. Même recette que le bouton micro coupé. */
+        .vision-src.is-stop {
+            margin-top: 6px;
+            background: rgba(239, 83, 80, 0.14);
+            border: 1px solid rgba(239, 83, 80, 0.4);
+            color: var(--danger);
+            font-weight: 600;
+        }
+        .vision-src.is-stop:hover {
+            background: rgba(239, 83, 80, 0.22);
+            border-color: rgba(239, 83, 80, 0.6);
+        }
+        .vision-src.is-stop .icon { color: var(--danger); }
+
+        /* Bulle 2 : surcoût de la vision, sous la bulle des sources. */
+        .vision-cost { padding: 11px 13px; }
+        .vision-cost-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+        .vision-cost-label .vision-badge-icon { width: 13px; height: 13px; }
+        .vision-cost-label .vision-badge-icon svg { width: 13px; height: 13px; }
+        .vision-cost-value {
+            margin-top: 3px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .vision-cost-note {
+            margin-top: 4px;
+            font-size: 0.75rem;
+            line-height: 1.45;
+            color: var(--text-secondary);
+        }
+
+        /* Vignette « ce que le modèle voit » : petite fenêtre fixe en bas à
+           droite, avec le point d'enregistrement et le bouton de coupure. */
+        .vision-preview {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            /* Sous le tiroir mobile (150-161) et sous les fenêtres modales
+               (200+) : la vignette ne doit pas recouvrir les réglages. */
+            z-index: 140;
+            width: 208px;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: #000;
+            box-shadow: 0 12px 32px var(--shadow);
+        }
+        .vision-preview video { display: block; width: 100%; height: auto; }
+        .vision-preview-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            background: var(--modal-bg);
+        }
+        .vision-preview-bar .label {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+        }
+        .vision-dot {
+            width: 8px;
+            height: 8px;
+            flex: 0 0 auto;
+            border-radius: 50%;
+            background: var(--danger);
+            animation: visionPulse 1.6s ease-in-out infinite;
+        }
+        @keyframes visionPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+        .vision-preview-btn {
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 9px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font: inherit;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .vision-preview-btn:hover { background: var(--bg-hover); border-color: var(--accent); }
+        .vision-preview-btn svg { width: 13px; height: 13px; }
+        @media (max-width: 640px) {
+            .vision-preview { width: 148px; right: 12px; bottom: 12px; }
+        }
+
+        /* Viseur centré des modèles OpenAI : l'envoi est ponctuel, donc on
+           donne de la place à l'image et un bouton de capture franc, au lieu
+           de la vignette discrète du flux Gemini. */
+        .vision-capture {
+            position: fixed;
+            inset: 0;
+            z-index: 250;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+        }
+        .vision-capture-card {
+            width: min(560px, 100%);
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            padding: 20px;
+            border-radius: 18px;
+            background: var(--modal-bg);
+            border: 1px solid var(--border);
+            box-shadow: 0 24px 60px var(--shadow);
+            text-align: center;
+        }
+        .vision-capture-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .vision-capture-hint {
+            margin-top: 6px;
+            font-size: 0.82rem;
+            line-height: 1.45;
+            color: var(--text-secondary);
+        }
+        .vision-capture-stage {
+            margin-top: 16px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+            border: 1px solid var(--border);
+        }
+        .vision-capture-stage video {
+            display: block;
+            width: 100%;
+            max-height: 52vh;
+            object-fit: contain;
+            background: #000;
+        }
+        .vision-capture-actions {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        .vision-capture-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 30px;
+            border: none;
+            border-radius: 999px;
+            background: var(--accent);
+            /* L'accent est CLAIR en thème sombre : du blanc dessus tombe vers
+               1,8:1. Texte très foncé ici, blanc sur un bleu plus profond en
+               thème clair — les deux passent le AA largement. */
+            color: #062a3d;
+            font: inherit;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.15s, filter 0.15s;
+        }
+        [data-theme="light"] .vision-capture-btn {
+            background: #1565c0;
+            color: #fff;
+        }
+        .vision-capture-btn:hover { filter: brightness(1.08); transform: scale(1.03); }
+        .vision-capture-btn:active { transform: scale(0.97); }
+        .vision-capture-btn:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 3px; }
+        .vision-capture-btn-icon,
+        .vision-capture-btn-check { display: inline-flex; width: 20px; height: 20px; }
+        .vision-capture-btn-icon svg,
+        .vision-capture-btn-check svg { width: 20px; height: 20px; }
+        /* Confirmation d'envoi : l'icône passe de l'obturateur à la coche et
+           le libellé change — deux signaux, aucun qui repose sur la couleur. */
+        .vision-capture-btn-check { display: none; }
+        .vision-capture-btn.is-sent .vision-capture-btn-icon { display: none; }
+        .vision-capture-btn.is-sent .vision-capture-btn-check { display: inline-flex; }
+        .vision-capture-done {
+            padding: 13px 22px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .vision-capture-done:hover { background: var(--bg-hover); border-color: var(--text-secondary); }
+
+        /* Saut de ligne avant la vignette. Inutile quand le message est un bloc ;
+           en mise en page compacte (message en flex horizontal), il force
+           l'image sous le texte au lieu de la coller à sa droite. */
+        .transcript-msg .vision-break { display: none; }
+        #conversationArea.layout-compact #transcript .transcript-msg .vision-break {
+            display: block;
+            flex-basis: 100%;
+            height: 0;
+        }
+
+        /* Image partagée dans le transcript : vignette sous le texte, cliquable
+           pour l'agrandir (curseur loupe + anneau de focus au clavier). */
+        .transcript-msg .vision-thumb {
+            display: block;
+            margin-top: 6px;
+            width: 100%;
+            max-width: 220px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            cursor: zoom-in;
+            transition: border-color 0.15s, transform 0.15s;
+        }
+        .transcript-msg .vision-thumb:hover { border-color: var(--accent); transform: scale(1.01); }
+        .transcript-msg .vision-thumb:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        /* Visionneuse : l'image envoyée, en grand, sur fond assombri. */
+        .image-lightbox {
+            position: fixed;
+            inset: 0;
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            padding: 32px;
+            background: rgba(0, 0, 0, 0.82);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            cursor: zoom-out;
+        }
+        .image-lightbox img {
+            max-width: 100%;
+            min-height: 0;
+            max-height: calc(100vh - 128px);
+            object-fit: contain;
+            border-radius: 12px;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+            cursor: default;
+        }
+        .image-lightbox-caption {
+            max-width: 100%;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.85rem;
+            text-align: center;
+            overflow-wrap: anywhere;
+        }
+        .image-lightbox-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .image-lightbox-close:hover {
+            background: rgba(255, 255, 255, 0.22);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+        .image-lightbox-close:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+        .image-lightbox-close svg { width: 18px; height: 18px; }
+        @media (max-width: 640px) {
+            .image-lightbox { padding: 16px; }
+            .image-lightbox img { max-height: calc(100vh - 104px); }
+        }
+
+        /* Pastille « vision », posée JUSTE SOUS la pastille de tarif : même
+           forme, même graisse, avec en tête l'icône de la modalité acceptée
+           (caméscope = vidéo en direct, cadre photo = images fixes). */
+        .vision-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: var(--bg-hover);
+            color: var(--text-secondary);
+            font-size: 0.68rem;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+        .vision-badge-icon {
+            display: inline-flex;
+            width: 12px;
+            height: 12px;
+            flex: 0 0 auto;
+        }
+        .vision-badge-icon svg { width: 12px; height: 12px; }
+        /* Les pastilles d'une option s'empilent à droite du nom : tarif en
+           haut, vision en dessous, toutes deux calées sur le bord droit. */
+        .vart-select-option-badges {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+            flex: 0 0 auto;
+        }
+        .vart-select-option.is-selected .vision-badge,
+        .model-picker-option.selected .vision-badge {
+            background: var(--modal-bg);
+            color: var(--accent);
+        }
+        /* Même empilement dans les .model-picker, où le tarif est une ligne
+           de texte : la pastille vient juste en dessous, calée à gauche. */
+        .model-picker-vision,
+        .model-picker-option-vision { margin-top: 2px; }
+
+        #status.error { color: var(--danger); }
+        #status.connected { color: var(--success); }
+        #status.searching { color: var(--accent); }
+
+        .transcript-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: -14px;
+        }
+
+        .transcript-export-btn {
+            margin-left: auto;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            cursor: pointer;
+            padding: 5px 10px;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .transcript-export-btn .icon {
+            filter: none;
+            opacity: 1;
+        }
+
+        .transcript-export-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        #transcript {
+            width: 100%;
+            max-width: 800px;
+            flex: 1;
+            min-height: 120px;
+            max-height: none;
+            overflow-y: auto;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition:
+                background 0.3s,
+                padding 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s,
+                bottom 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                left 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                right 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                max-width 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Mode discussion : on cache la transcription chat (bulles) et les boutons d'export
+           — données toujours peuplées en arrière-plan pour export/copy ultérieurs */
+        #conversationArea:not(.transcripteur-mode):not(.viewing-history) .transcript-header,
+        #conversationArea:not(.transcripteur-mode):not(.viewing-history) #transcript {
+            display: none !important;
+        }
+        .transcript-export-btn { display: none !important; }
+

@@ -1,0 +1,14 @@
+{
+  "name": "vart",
+  "private": true,
+  "description": "Vart — assistant vocal d'apprentissage, 100 % local. vart.html est GÉNÉRÉ depuis src/ par scripts/build.js.",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "check": "node scripts/check.js",
+    "shots": "node scripts/vart_shots.js",
+    "split": "node scripts/split.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.63.0"
+  }
+}

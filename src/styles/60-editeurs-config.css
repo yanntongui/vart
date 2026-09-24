@@ -1,0 +1,2192 @@
+        /* Export transcripteur : choix de format */
+        .export-format-choice {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .export-format-choice button {
+            padding: 14px 28px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .export-format-choice button:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .export-cancel-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.82rem;
+            margin-top: 18px;
+            padding: 6px 16px;
+            transition: color 0.15s;
+        }
+
+        .export-cancel-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--scrim);
+            /* Matériau Apple : flou + saturation pour que le contenu derrière
+               reste présent sans distraire (couche flottante, pas mur opaque). */
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background: var(--modal-bg);
+            border-radius: 20px;
+            padding: 2rem;
+            width: 520px;
+            max-width: 95vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px var(--shadow);
+            transition: background 0.3s;
+        }
+        /* « Materialize, don't just fade » : la surface arrive comme un objet
+           physique (échelle + élévation + opacité ensemble) sur la courbe spring.
+           Ciblée sur .active pour ne pas rejouer au simple changement de thème. */
+        .modal-overlay.active .modal {
+            animation: modalMaterialize 0.35s var(--spring);
+        }
+        @keyframes modalMaterialize {
+            from { opacity: 0; transform: translateY(10px) scale(0.96); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        /* La barre de défilement ne doit pas déborder des angles arrondis
+           (border-radius 20px) : on inset la piste (et donc le curseur) en
+           haut et en bas pour qu'elle reste dans la zone arrondie. */
+        .modal::-webkit-scrollbar-track { margin: 20px 0; }
+
+        .modal h2 {
+            font-size: 1.3rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            letter-spacing: -0.01em; /* tracking négatif : titres ≥ 1.2rem (§15) */
+        }
+
+        .modal label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.3rem;
+            margin-top: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Le tout premier label collé au h2 : le margin-collapse avec la marge
+           basse du h2 gère déjà l'espace, pas besoin de zéro explicite. On
+           NE met PAS `.modal label:first-of-type { margin-top: 0 }` global :
+           il se déclencherait sur le premier label de chaque conteneur imbriqué
+           (persona-head, groupes, colonnes couleur…) et « collerait » ces
+           labels, cassant le rythme vertical. Les exceptions voulues sont
+           scopées explicitement (ex. « Nom » aligné avec l'avatar). */
+
+        .modal input[type="password"],
+        .modal input[type="text"],
+        .modal select,
+        .modal textarea {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s, background 0.3s;
+        }
+
+        .modal input:focus, .modal select:focus, .modal textarea:focus {
+            border-color: var(--accent);
+        }
+
+        .modal textarea {
+            /* block (et non inline-block par défaut) : évite l'espace fantôme
+               (« descender ») sous la zone, qui gonflait l'écart vertical
+               jusqu'au champ suivant (20px au lieu de 16px). */
+            display: block;
+            resize: vertical;
+            min-height: 160px;
+            line-height: 1.5;
+            font-size: 0.85rem;
+        }
+
+        .modal .hint {
+            font-size: 0.73rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+        }
+
+        /* Image upload/generate row */
+        .image-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-top: 0.5rem;
+        }
+
+        .image-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .image-preview-placeholder {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            background: var(--bg-input);
+            border: 1px dashed var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .image-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        /* En-tête éditeur persona : avatar à gauche, nom + description à droite. */
+        .persona-head {
+            display: flex;
+            gap: 18px;
+            align-items: flex-start;
+        }
+        .persona-head-avatar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-shrink: 0;
+            width: 134px;
+        }
+        .persona-head-fields { flex: 1; min-width: 0; }
+        .persona-head-fields label:first-of-type { margin-top: 0; }
+
+        .persona-avatar-preview {
+            width: 104px;
+            height: 104px;
+            border-radius: 16px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            text-align: center;
+            overflow: hidden;
+        }
+        .persona-avatar-preview.is-empty { border-style: dashed; }
+        .persona-avatar-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .persona-avatar-preview-lg { width: 132px; height: 132px; margin: 0 auto 6px; }
+
+        /* Génération d'image en cours : voile + roue de chargement PAR-DESSUS
+           l'aperçu (ou le placeholder vide s'il n'y a pas encore d'image).
+           Pas de texte « Génération en cours ». */
+        .persona-avatar-preview.is-generating { position: relative; }
+        .persona-avatar-preview.is-generating::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(10, 12, 20, 0.5);
+            z-index: 2;
+        }
+        .persona-avatar-preview.is-generating::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 34px;
+            height: 34px;
+            margin: -17px 0 0 -17px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            animation: avatarGenSpin 0.8s linear infinite;
+            z-index: 3;
+        }
+        @keyframes avatarGenSpin { to { transform: rotate(360deg); } }
+
+        /* Avatar cliquable : au survol, un scrim sombre + un gros crayon
+           apparaissent par-dessus l'image pour signaler « Modifier l'image ». */
+        .persona-avatar-edit {
+            position: relative;
+            display: block;
+            width: 134px;
+            height: 134px;
+            padding: 0;
+            border: none;
+            background: none;
+            cursor: pointer;
+            border-radius: 16px;
+        }
+        /* L'aperçu remplit le bouton (taille pilotée par .persona-avatar-edit). */
+        .persona-avatar-edit .persona-avatar-preview { width: 100%; height: 100%; }
+        .persona-avatar-edit-icon {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 6px;
+            border-radius: 16px;
+            background: rgba(0, 0, 0, 0.55);
+            color: #fff;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+        .persona-avatar-edit-icon svg { width: 34px; height: 34px; }
+        .persona-avatar-edit-text { font-size: 0.72rem; font-weight: 600; line-height: 1.2; text-align: center; }
+        .persona-avatar-edit:hover .persona-avatar-edit-icon,
+        .persona-avatar-edit:focus-visible .persona-avatar-edit-icon { opacity: 1; }
+        .persona-avatar-edit:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+        /* Icône d'aide « ? » à droite d'un titre + infobulle au survol. */
+        .help-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.62rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-left: 6px;
+            cursor: help;
+            vertical-align: middle;
+            user-select: none;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+        .help-icon:hover, .help-icon:focus { color: var(--accent); border-color: var(--accent); outline: none; }
+        .help-tip {
+            position: fixed;
+            z-index: 400;
+            max-width: 280px;
+            padding: 9px 12px;
+            border-radius: 9px;
+            background: var(--modal-bg);
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 30px var(--shadow);
+            color: var(--text-secondary);
+            font-size: 0.76rem;
+            line-height: 1.45;
+            pointer-events: none;
+            text-transform: none;
+            letter-spacing: normal;
+        }
+
+        /* Actions dans la popup image (Générer / Importer / Supprimer). */
+        .image-popup-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        /* Boutons Générer/Optimiser le prompt : occupent la largeur dispo. */
+        .prompt-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .prompt-actions .btn-small {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            text-align: center;
+        }
+
+        /* Panneau d'options de génération : masqué au départ, révélé au clic
+           sur « Générer ». */
+        .gen-panel { display: none; }
+        .gen-panel.open { display: block; }
+        /* Boutons de lancement de la génération : empilés, pleine largeur. */
+        .gen-run-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        .gen-run-btn {
+            display: flex;
+            width: 100%;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 14px;
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .gen-run-btn:hover { background: var(--bg-active); }
+
+        /* Deux sélecteurs de couleur (fond + haut) côte à côte. */
+        .image-color-row {
+            display: flex;
+            gap: 12px;
+        }
+        .image-color-field { flex: 1; min-width: 0; }
+        .modal .image-color-field input[type="color"] {
+            width: 100%;
+            height: 40px;
+            padding: 3px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .modal .image-color-field input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        .modal .image-color-field input[type="color"]::-webkit-color-swatch { border: none; border-radius: 6px; }
+        .modal .image-color-field input[type="color"]::-moz-color-swatch { border: none; border-radius: 6px; }
+
+        /* Boutons/label alignés : même hauteur. La règle est scopée `.modal …`
+           pour battre en spécificité `.modal label` (qui imposait sinon
+           display:block + margin-top au <label> Importer, d'où sa hauteur et
+           son alignement différents des <button>). */
+        .modal .image-popup-actions > * {
+            flex: 1;
+            min-width: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            box-sizing: border-box;
+            margin: 0;
+            /* Neutralise l'héritage de `.modal label` sur « Importer »
+               (majuscules, interlettrage, couleur atténuée) pour un rendu
+               identique aux <button> voisins. */
+            text-transform: none;
+            letter-spacing: normal;
+            font-size: 0.8rem;
+            color: var(--text-primary);
+        }
+
+        .btn-small {
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+
+        .btn-small:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-small:disabled { opacity: 0.4; cursor: wait; }
+
+        /* Toggle switch */
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            margin-top: 1rem;
+        }
+
+        .toggle-row label {
+            margin: 0;
+            text-transform: none;
+            font-size: 0.88rem;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 40px;
+            height: 22px;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            margin: 0;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            inset: 0;
+            background: var(--text-muted);
+            border-radius: 22px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            left: 3px;
+            top: 3px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .toggle-switch input:checked + .toggle-slider { background: var(--accent); }
+        .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+        /* Bouton sauvegarder */
+        .btn-save {
+            display: block;
+            width: 100%;
+            margin-top: 1.5rem;
+            padding: 12px;
+            background: linear-gradient(135deg, var(--accent), #556b1a);
+            color: #fff;
+            font-weight: 700;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-save:hover { transform: scale(1.02); }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 1.5rem;
+        }
+
+        .modal-buttons .btn-save { margin-top: 0; }
+
+        .persona-share-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .persona-share-row .btn-small {
+            flex: 1;
+            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        /* « Exporter ce persona » mis en valeur : contour accent + fond
+           légèrement teinté, se remplit au survol. */
+        #exportPersonaBtn {
+            padding: 10px 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1.5px solid var(--accent);
+            border-radius: 10px;
+            background: var(--bg-active);
+            color: var(--accent);
+        }
+        #exportPersonaBtn:hover {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        #exportPersonaBtn .icon { opacity: 1; }
+
+        .btn-cancel {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-hover);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel:hover { color: var(--text-primary); }
+
+        .modal-close {
+            position: absolute;
+            top: 14px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.15s;
+            line-height: 1;
+        }
+        .modal-close:hover { color: var(--text-primary); background: var(--bg-hover); }
+
+        /* Sauvegarde modal */
+        .backup-warning {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            padding: 14px 16px;
+            background: var(--bg-input);
+            border-left: 3px solid var(--accent2);
+            border-radius: 8px;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .backup-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 4px;
+        }
+
+        .backup-action-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 18px 12px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: center;
+            font-family: inherit;
+            font-size: 0.85rem;
+        }
+
+        .backup-action-btn:hover {
+            border-color: var(--accent);
+            background: var(--bg-active);
+        }
+
+        .backup-export {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+            font-weight: 600;
+        }
+
+        .backup-export:hover {
+            opacity: 0.9;
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .backup-action-sub {
+            font-size: 0.72rem;
+            font-weight: 400;
+            opacity: 0.8;
+        }
+
+        /* « Importer » est un <label> (pour l'input fichier caché) : sans ça, il
+           hérite de `.modal label` (MAJUSCULES, display:block, couleur atténuée,
+           marges) et devient incohérent avec « Exporter » (un <button>). On
+           réaffirme la même mise en page pour une paire cohérente. */
+        .backup-actions .backup-import {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            margin: 0;
+            text-transform: none;
+            letter-spacing: normal;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+        }
+        .backup-actions .backup-import strong { font-weight: 600; }
+
+        /* Dialogues custom */
+        .dialog-overlay {
+            display: flex;
+            position: fixed;
+            inset: 0;
+            background: var(--scrim);
+            backdrop-filter: blur(12px) saturate(150%);
+            -webkit-backdrop-filter: blur(12px) saturate(150%);
+            z-index: 300;
+            align-items: center;
+            justify-content: center;
+            animation: dialogFadeIn 0.15s ease;
+        }
+        @keyframes dialogFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .dialog-box {
+            background: var(--modal-bg);
+            border-radius: 18px;
+            padding: 28px 30px 22px;
+            width: 400px;
+            max-width: 92vw;
+            box-shadow: 0 16px 48px var(--shadow);
+            text-align: center;
+            /* Même physique que les modales (cohérence spatiale §7) : la boîte
+               « arrive » depuis légèrement en dessous, sur la courbe spring. */
+            animation: dialogSlideIn 0.28s var(--spring);
+        }
+        @keyframes dialogSlideIn {
+            from { transform: translateY(12px) scale(0.97); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        /* Accessibilité (§14) : « reduced motion » ne veut pas dire « aucun
+           feedback » mais un équivalent non vestibulaire — fondu court, sans
+           déplacement ni mise à l'échelle. « Reduced transparency » rend les
+           surfaces opaques : le blur perd sa fonction et coûte en lisibilité. */
+        @media (prefers-reduced-motion: reduce) {
+            .modal-overlay.active .modal { animation: none; }
+            .dialog-box { animation: dialogFadeIn 0.15s ease; }
+            .welcome-card, .welcome-card:hover, .welcome-card:active,
+            .btn, .btn:hover, .btn:active {
+                transition-duration: 100ms;
+                transform: none;
+            }
+        }
+        @media (prefers-reduced-transparency: reduce) {
+            .modal-overlay, .dialog-overlay {
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
+                background: rgba(0,0,0,0.7);
+            }
+        }
+        .dialog-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            filter: grayscale(1);
+            opacity: 0.4;
+        }
+        .dialog-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            letter-spacing: -0.01em; /* cohérence avec les autres titres (§15) */
+        }
+        .dialog-message {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            line-height: 1.55;
+            margin-bottom: 20px;
+        }
+        .dialog-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .dialog-btn {
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+        .dialog-btn:hover {
+            background: var(--bg-active);
+        }
+        .dialog-btn-primary {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        .dialog-btn-primary:hover {
+            opacity: 0.9;
+            background: var(--accent);
+        }
+        .dialog-btn-danger {
+            background: var(--danger);
+            color: #fff;
+            border-color: var(--danger);
+        }
+        .dialog-btn-danger:hover {
+            opacity: 0.9;
+            background: var(--danger);
+        }
+        /* Dialogue à 3 choix (modifications non enregistrées) : boutons empilés
+           et pleine largeur pour des libellés longs et lisibles. */
+        .dialog-buttons.dlg-stack {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 8px;
+        }
+        .dialog-buttons.dlg-stack .dialog-btn { width: 100%; }
+
+        /* Icônes dans les boutons : gris, pas coloré */
+        .icon {
+            filter: grayscale(1);
+            opacity: 0.45;
+        }
+
+        .btn-save .icon,
+        .btn-new-persona .icon,
+        .backup-export .icon,
+        .btn-start .icon,
+        .btn-stop .icon {
+            opacity: 0.7;
+        }
+
+        /* Insights checkboxes */
+        .insight-item {
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: var(--bg-input);
+            margin-bottom: 6px;
+            transition: background 0.15s;
+        }
+        .insight-item:hover { background: var(--bg-hover); }
+        .insight-item-top {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            cursor: pointer;
+        }
+        .insight-item input[type="checkbox"] {
+            margin-top: 2px;
+            accent-color: var(--accent);
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+        .insight-item label {
+            margin: 0;
+            text-transform: none;
+            font-size: 0.88rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            line-height: 1.4;
+            flex: 1;
+        }
+        .insight-dest-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 7px;
+            margin-left: 26px;
+        }
+        .insight-dest-btn {
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .insight-dest-btn.active {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--bg-active);
+        }
+        .insight-dest-btn:hover:not(.active) {
+            color: var(--text-secondary);
+            border-color: var(--text-muted);
+        }
+
+        .api-key-required {
+            background: rgba(239, 83, 80, 0.1);
+            border: 1px solid var(--danger);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            font-size: 0.85rem;
+            color: var(--danger);
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .api-guide {
+            background: var(--bg-hover);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin: 10px 0;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .api-guide ol {
+            margin: 6px 0 8px 18px;
+            padding: 0;
+        }
+
+        .api-guide li {
+            margin-bottom: 3px;
+        }
+
+        .api-guide a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .api-guide a:hover {
+            text-decoration: underline;
+        }
+
+        .api-guide code {
+            background: var(--bg-input);
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .api-guide p {
+            margin: 4px 0;
+        }
+
+        #apiKeyModal > .modal {
+            width: 640px;
+            height: 620px;        /* taille fixe : la popup ne change plus selon l'onglet */
+            max-height: 90vh;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #apiKeyModal > .modal > h2 {
+            padding: 1.5rem 1.5rem 0;
+            margin-bottom: 0.8rem;
+        }
+
+        #apiKeyModal > .modal > .api-key-required {
+            margin: 0 1.5rem 0.8rem;
+        }
+
+        #apiKeyModal > .modal > .btn-save {
+            margin: 1rem 1.5rem 1.5rem;
+            width: auto;
+        }
+
+        .config-layout {
+            display: grid;
+            grid-template-columns: 170px 1fr;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            flex: 1;
+            min-height: 0;        /* permet aux panneaux de scroller dans la hauteur fixée */
+            overflow: hidden;
+        }
+
+        .config-nav {
+            background: var(--bg-input);
+            padding: 12px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            border-right: 1px solid var(--border);
+            overflow-y: auto;   /* évite que les onglets du bas soient coupés
+                                   quand le modal est écrasé sur un petit écran. */
+            min-height: 0;
+        }
+
+        .config-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 18px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border: none;
+            background: none;
+            text-align: left;
+            border-radius: 0;
+            transition: all 0.15s;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+
+        .config-nav-item:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .config-nav-item.active {
+            background: var(--bg-active);
+            color: var(--accent);
+            font-weight: 600;
+            border-right: 3px solid var(--accent);
+        }
+
+        /* Stage qui contient .config-panels ET .modal-page-picker.
+           Occupe la case (row 1, col 2) de la grille et clippe l'overflow
+           interne — indispensable pour que le slide-out de .config-panels
+           vers `-100%` ne déborde pas visuellement dans la nav de gauche. */
+        .config-panels-stage {
+            grid-column: 2;
+            grid-row: 1;
+            position: relative;
+            overflow: hidden;
+            min-width: 0;
+            min-height: 0;
+        }
+        .config-panels {
+            position: absolute;
+            inset: 0;
+            padding: 20px 24px;
+            overflow-y: auto;
+            transform: translateX(0);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .modal.picker-open .config-panels {
+            transform: translateX(-100%);
+        }
+
+        .config-panel {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .config-panel.active {
+            display: flex;
+        }
+
+        .config-panel .hint {
+            font-size: 0.73rem;
+            color: var(--text-muted);
+            margin-top: 0;
+        }
+
+        /* Onglet Affichage : cartes de thème + disposition. */
+        .display-section-title {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin: 6px 0 2px;
+        }
+        .display-section-title:not(:first-child) { margin-top: 20px; }
+        .display-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .display-card {
+            position: relative;
+            flex: 1 1 130px;
+            min-width: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 10px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font: inherit;
+            transition: border-color 0.15s, background 0.15s, color 0.15s;
+        }
+        .display-card:hover { border-color: var(--text-muted); color: var(--text-primary); }
+        .display-card.is-active {
+            border-color: var(--accent);
+            background: var(--bg-active);
+            color: var(--text-primary);
+        }
+        .display-card-preview {
+            width: 100%;
+            height: 54px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+        }
+        .display-card-preview svg { width: 42px; height: auto; }
+
+        /* Aperçu de thème : mini-maquette (titre « Vart » + deux barres de
+           texte) colorée selon le thème, pour montrer concrètement la
+           différence clair / sombre — contraste de LUMINANCE, pas de teinte. */
+        .theme-preview {
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 6px;
+            height: 64px;
+            padding: 11px 13px;
+            overflow: hidden;
+        }
+        .theme-preview .tp-head {
+            font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            line-height: 1;
+        }
+        .theme-preview .tp-bar { height: 6px; border-radius: 3px; width: 100%; }
+        .theme-preview .tp-bar-short { width: 60%; }
+
+        .theme-preview-dark  { background: #14142a; border-color: #2a2a40; }
+        .theme-preview-dark .tp-head { color: #eef0f7; }
+        .theme-preview-dark .tp-bar { background: #363b52; }
+        .theme-preview-dark .tp-bar-short { background: #5b8def; }
+
+        .theme-preview-light { background: #f4f5f8; border-color: #d7dae1; }
+        .theme-preview-light .tp-head { color: #1c2230; }
+        .theme-preview-light .tp-bar { background: #ccd1db; }
+        .theme-preview-light .tp-bar-short { background: #3b82f6; }
+
+        .display-card-label { font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+        .display-card-label .icon { font-size: 0.95em; opacity: 0.85; }
+        .display-card-check {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 18px;
+            height: 18px;
+            color: var(--accent);
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+        .display-card.is-active .display-card-check { opacity: 1; }
+
+        /* Contrôle segmenté (style iOS / macOS) pour choisir le fournisseur d'API */
+        .segmented {
+            position: relative;
+            display: inline-grid;
+            grid-auto-flow: column;
+            /* minmax(0, 1fr) : les colonnes peuvent passer sous leur largeur
+               « min-content » dans un conteneur étroit (mobile) au lieu de
+               déborder ; les libellés se tronquent alors proprement. */
+            grid-auto-columns: minmax(0, 1fr);
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 3px;
+            gap: 0;
+            width: 100%;
+            isolation: isolate;
+        }
+        .segmented-item {
+            position: relative;
+            z-index: 1;
+            min-width: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            padding: 8px 12px;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: color 0.18s ease;
+        }
+        .segmented-item:hover { color: var(--text-primary); }
+        .segmented-item.active { color: var(--text-primary); }
+        /* Le « pouce » se dimensionne et se déplace via deux variables CSS
+           posées en JS par setSegmentedActive() : --seg-count (nb d'onglets)
+           et --seg-index (onglet actif). Le même composant sert donc aux
+           3 onglets des clés API comme aux 2 ou 3 onglets des sélecteurs de
+           modèle. */
+        .segmented-thumb {
+            position: absolute;
+            top: 3px;
+            bottom: 3px;
+            left: 3px;
+            width: calc((100% - 6px) / var(--seg-count, 3));
+            background: var(--bg-active);
+            border-radius: 7px;
+            box-shadow: 0 1px 3px var(--shadow);
+            transform: translateX(calc(var(--seg-index, 0) * 100%));
+            transition: transform 0.22s cubic-bezier(.25,.8,.3,1);
+            z-index: 0;
+        }
+        [data-theme="light"] .segmented-thumb { background: #fff; }
+        /* Variante compacte : onglets dans un menu déroulant (vart-select). */
+        .segmented.segmented-compact .segmented-item {
+            padding: 6px 10px;
+            font-size: 0.78rem;
+        }
+        /* Onglets fournisseur de la page push « Sélectionner un modèle ». */
+        .modal-page-tabs {
+            flex-shrink: 0;
+            margin-bottom: 14px;
+        }
+        .modal-page-tabs:empty { display: none; }
+        /* Petits écrans : le panneau droit de la modale Configuration est trop
+           étroit (~190 px) pour 3 onglets côte à côte → ils passent en
+           pastilles qui vont à la ligne, sans pouce glissant. Le menu de la
+           modale persona (pleine largeur) garde le contrôle classique. */
+        @media (max-width: 640px) {
+            #apiKeyModal .segmented {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+            #apiKeyModal .segmented-thumb { display: none; }
+            #apiKeyModal .segmented-item {
+                flex: 1 1 auto;
+                overflow: visible;
+                text-overflow: clip;
+            }
+            #apiKeyModal .segmented-item.active {
+                background: var(--bg-active);
+                box-shadow: 0 1px 3px var(--shadow);
+            }
+            [data-theme="light"] #apiKeyModal .segmented-item.active { background: #fff; }
+        }
+
+        /* Panels du contrôle segmenté */
+        .api-tab-panel { display: none; flex-direction: column; gap: 10px; }
+        .api-tab-panel.active { display: flex; }
+
+        /* Grille de cartes pour la modale "Nouveau persona" */
+        .chooser-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        @media (max-width: 640px) {
+            .chooser-grid { grid-template-columns: 1fr; }
+        }
+        .chooser-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 8px;
+            padding: 24px 16px 20px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            color: var(--text-primary);
+            cursor: pointer;
+            text-align: center;
+            font-family: inherit;
+            transition: transform 0.18s, border-color 0.18s, background 0.18s;
+        }
+        .chooser-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent);
+            background: var(--bg-hover);
+        }
+        .chooser-card-icon {
+            font-size: 1.9rem;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .chooser-card-title {
+            font-size: 0.98rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .chooser-card-desc {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .model-picker { position: relative; }
+        .model-picker-trigger {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: inherit;
+            cursor: pointer;
+            text-align: left;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        .model-picker-trigger:hover { border-color: var(--accent); }
+        .model-picker-trigger:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+        .model-picker-value { flex: 1; min-width: 0; }
+        .model-picker-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .model-picker-cost {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .model-picker-caret {
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+            line-height: 1;
+            font-weight: 300;
+            transition: color 0.15s;
+        }
+        .model-picker-trigger:hover .model-picker-caret { color: var(--accent); }
+
+        /*
+           Cliquer sur un .model-picker-trigger fait glisser une page « pleine
+           écran » du modal depuis la droite, avec titre + liste de modèles.
+           Le contenu original reste en place derrière (invisible, non-focusable).
+        */
+
+        /* La page push ne recouvre QUE le panneau droit (.config-panels) :
+           on la place en 3ème cellule de la grille .config-layout, dans la
+           colonne 2, même ligne que .config-panels → elle empile dessus.
+           `.config-layout { overflow: hidden }` (déjà présent) clippe le
+           slide-in venant de la droite. */
+        .modal-page-picker {
+            position: absolute;
+            inset: 0;
+            background: var(--modal-bg);
+            transform: translateX(100%);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                        visibility 0s linear 0.35s;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 24px;
+            visibility: hidden;
+        }
+        .modal.picker-open .modal-page-picker {
+            transform: translateX(0);
+            visibility: visible;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modal-page-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 20px;
+            flex-shrink: 0;
+        }
+        .modal-page-back {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            padding: 8px 12px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            transition: color 0.15s, border-color 0.15s, background 0.15s;
+        }
+        .modal-page-back:hover {
+            color: var(--accent);
+            border-color: var(--accent);
+            background: var(--bg-hover);
+        }
+        .modal-page-title {
+            margin: 0;
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .modal-page-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding-right: 4px;
+        }
+        /* Les options dans la page push réutilisent les mêmes styles que
+           l'ancien dropdown (.model-picker-option) pour rester cohérentes. */
+
+        .model-picker-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            max-height: 320px;
+            overflow-y: auto;
+            background: var(--modal-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 10px 32px var(--shadow);
+            z-index: 10;
+            padding: 4px;
+        }
+        .model-picker.open .model-picker-menu { display: block; }
+        /* Flip-up : quand le menu déborderait vers le bas (bas du modal /
+           viewport), on l'ouvre AU-DESSUS du trigger. La classe est ajoutée
+           dynamiquement par le click handler qui mesure l'espace disponible. */
+        .model-picker.flip-up .model-picker-menu {
+            top: auto;
+            bottom: calc(100% + 6px);
+        }
+
+        .model-picker-group {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-muted);
+            padding: 10px 12px 4px;
+        }
+        .model-picker-option {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            padding: 10px 12px;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: background 0.12s;
+        }
+        .model-picker-option:hover { background: var(--bg-hover); }
+        .model-picker-option.selected {
+            background: var(--bg-active);
+            color: var(--accent);
+        }
+        .model-picker-option.disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+        .model-picker-option.disabled:hover { background: transparent; }
+        .model-picker-option-name {
+            font-size: 0.92rem;
+            font-weight: 500;
+            line-height: 1.2;
+        }
+        /* Nouveautés + Grok : nom en gras pour ressortir dans la liste. */
+        .model-picker-option.is-featured .model-picker-option-name { font-weight: 700; }
+        .model-picker-option-cost {
+            font-size: 0.74rem;
+            color: var(--text-secondary);
+            line-height: 1.2;
+        }
+        .model-picker-option.selected .model-picker-option-cost { color: var(--accent); opacity: 0.85; }
+
+        .api-key-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            padding: 4px 10px;
+            border-radius: 8px;
+            margin-top: 4px;
+        }
+
+        .api-key-status.valid {
+            color: var(--success);
+            background: rgba(102, 187, 106, 0.1);
+        }
+
+        .api-key-status.invalid {
+            color: var(--danger);
+            background: rgba(239, 83, 80, 0.1);
+        }
+
+        .api-key-status.checking {
+            color: var(--text-secondary);
+            background: var(--bg-hover);
+        }
+
+        .budget-bar {
+            height: 6px;
+            border-radius: 3px;
+            background: var(--bg-input);
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .budget-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+
+        .persona-item[draggable="true"] {
+            cursor: grab;
+        }
+
+        .persona-item.dragging {
+            opacity: 0.4;
+        }
+
+        .persona-item.drag-over {
+            border-top: 2px solid var(--accent);
+        }
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            margin-top: 10px;
+        }
+        .stats-table th, .stats-table td {
+            padding: 10px 12px;
+            text-align: right;
+            border-bottom: 1px solid var(--border);
+        }
+        .stats-table th:first-child, .stats-table td:first-child {
+            text-align: left;
+        }
+        /* Les chiffres ne se coupent jamais (« 2 img. », « $0.15 ») : une
+           ligne coupée serait plus haute que ses voisines. Seul le nom, en
+           première colonne, peut passer à la ligne. */
+        .stats-table td:not(:first-child) { white-space: nowrap; }
+        /* Les périodes sont des libellés fixes et courts : ils tiennent sur une
+           ligne, ce qui garde les quatre lignes du tableau à la même hauteur. */
+        .stats-periods td:first-child { white-space: nowrap; }
+        .stats-table th {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .stats-total td {
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: none;
+        }
+        .stats-tabs {
+            display: flex;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+        .stats-tabs button {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+        .stats-tabs button.active {
+            background: var(--bg-active);
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .stats-tabs button:hover:not(.active) {
+            background: var(--bg-hover);
+        }
+        .stats-charts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .stats-chart-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+        .stats-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 0.78rem;
+        }
+        .stats-bar-label {
+            width: 70px;
+            text-align: right;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+        .stats-bar-track {
+            flex: 1;
+            height: 14px;
+            background: var(--bg-hover);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .stats-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            min-width: 2px;
+            transition: width 0.3s;
+        }
+        .stats-bar-value {
+            width: 55px;
+            text-align: left;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 900px) {
+            /* Sur mobile/tablette, le contenu occupe toute la largeur ; la
+               sidebar devient un tiroir superposé qui glisse depuis la gauche.
+               On anime `transform` (fiable et fluide, accéléré GPU) plutôt que
+               la largeur de la grille (interpolation fragile avec `1fr`).
+               Grille à UNE seule colonne : comme la sidebar passe en
+               `position: fixed` (hors flux), `#main` devient le seul enfant de
+               grille en flux et doit occuper toute la largeur — sinon il se
+               place dans une 1re colonne à 0px et la page paraît blanche. */
+            body,
+            body.sidebar-collapsed,
+            body.sidebar-mobile-open { grid-template-columns: 1fr; }
+
+            /* Le tiroir et sa poignée restent SOUS la couche des modales
+               (.modal-overlay = 200, dialogues = 300…) pour qu'une modale
+               ouverte les recouvre. Ils restent au-dessus du contenu (≤ 50)
+               et du fond d'obscurcissement (150). */
+            #sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 280px;
+                height: 100vh;
+                z-index: 160;
+                opacity: 1;
+                pointer-events: none;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                box-shadow: 2px 0 18px var(--shadow);
+            }
+            body.sidebar-mobile-open #sidebar {
+                transform: translateX(0);
+                pointer-events: auto;
+            }
+
+            #sidebarToggle { left: 0; border-left: 1px solid var(--border); z-index: 161; }
+            body.sidebar-mobile-open #sidebarToggle { left: 280px; border-left: none; }
+
+            /* Fond d'obscurcissement derrière le tiroir (tap pour fermer). */
+            #sidebarBackdrop {
+                display: block;
+                position: fixed;
+                inset: 0;
+                z-index: 150;
+                background: rgba(0, 0, 0, 0.45);
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease;
+            }
+            body.sidebar-mobile-open #sidebarBackdrop {
+                opacity: 1;
+                pointer-events: auto;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .viz-container canvas { max-width: 140px; }
+            #aiOrbWrap { height: 240px; border-radius: 18px; }
+            #userWaveWrap { height: 52px; }
+            #userLiveText { top: -18px; } /* recentrage propre au breakpoint mobile */
+            #conversationBody { padding: 16px 12px; gap: 14px; }
+            #personaHeader { padding: 16px 14px 8px; gap: 12px; }
+            #personaHeader #personaHeaderAvatar img,
+            #personaHeader .persona-header-placeholder,
+            #personaHeader .transcripteur-placeholder { width: 38px; height: 38px; }
+            .modal { padding: 1.2rem; width: 98vw; }
+            #personaHeaderName { font-size: 1.3rem; letter-spacing: 0.16em; }
+            #personaHeaderModel { font-size: 0.62rem; letter-spacing: 0.22em; }
+            .btn { padding: 11px 24px; font-size: 0.9rem; }
+            #sessionBar { flex-wrap: wrap; gap: 8px; font-size: 0.72rem; }
+            #emptyState { padding: 24px 14px; }
+            .welcome-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+            .welcome-card { padding: 18px 12px; }
+            .welcome-card-menu-btn { opacity: 1; }
+        }
+
+        /*
+           — classic : vue actuelle (orb avec texte IA superposé, texte user
+             centré entre la ligne d'onde et les boutons)
+           — compact : ligne d'onde remontée, texte IA + user en transcript
+             commun sous la ligne (utilise #transcript déjà peuplé)
+           — bubbles : ligne d'onde descendue, AI à gauche en bulle, user à
+             droite en bulle, démarrent AU-DESSUS de la ligne
+        */
+
+        /* Ancrage commun pour les layouts non-classiques : on positionne le
+           transcript en absolu par rapport au corps de la conversation. */
+        #conversationArea.layout-compact #conversationBody,
+        #conversationArea.layout-bubbles #conversationBody {
+            position: relative;
+        }
+        /* Les textes "live" overlay (sur l'orb + amber) sont remplacés par
+           #transcript qui gère déjà les messages en streaming, bulle par bulle
+           façon WhatsApp. */
+        #conversationArea.layout-compact #aiLiveText,
+        #conversationArea.layout-compact #userLiveText,
+        #conversationArea.layout-bubbles #aiLiveText,
+        #conversationArea.layout-bubbles #userLiveText {
+            display: none !important;
+        }
+        /* Vue simple (classique) : on masque la transcription live des paroles
+           de l'utilisateur (sous la ligne d'onde) pour un affichage épuré —
+           seul le texte de l'IA reste. Exclut Traducteur (parole source
+           affichée) et Transcripteur (dont c'est la fonction même). */
+        body:not(.traducteur-active) #conversationArea.layout-classic:not(.transcripteur-mode):not(.viewing-history) #userLiveText {
+            display: none !important;
+        }
+        /* L'en-tête du transcript (toggle ▾) est masqué : l'utilisateur ne doit
+           pas pouvoir fermer le cadre. */
+        #conversationArea.layout-compact:not(.viewing-history) .transcript-header,
+        #conversationArea.layout-bubbles:not(.viewing-history) .transcript-header {
+            display: none !important;
+        }
+
+        /* COMPACT ("Transcription simple")
+           Composition entièrement DANS LE FLOW (via `order`) pour un rythme
+           vertical robuste, identique quelle que soit la hauteur d'écran et
+           le nombre de lignes de description :
+             header → orb → ligne d'onde → transcription → boutons.
+           La ligne d'onde (trait au centre du canvas) est calée ~24 px sous
+           l'orb, soit le MÊME écart qu'entre le nom du modèle et l'orb. La
+           transcription remplit ensuite l'espace restant jusqu'aux boutons. */
+        #conversationArea.layout-compact #aiOrbWrap       { order: 1; }
+        #conversationArea.layout-compact #userWaveWrap    { order: 2; }
+        #conversationArea.layout-compact #transcript      { order: 3; }
+        #conversationArea.layout-compact .bottom-controls { order: 4; }
+        #conversationArea.layout-compact #status          { order: 5; }
+
+        /* Orb collé en haut : base 450 px (comme les autres vues) mais peut
+           RÉTRÉCIR (flex-shrink) sur écran court pour ne jamais pousser les
+           boutons hors de l'écran — comme la vue classique. Le canvas suit via
+           max-height: 100%. La symétrie orb/ligne d'onde tient quelle que soit
+           la taille (tout reste centré). */
+        #conversationArea.layout-compact #aiOrbWrap {
+            flex: 0 1 450px !important;
+            min-height: 220px !important;
+            height: auto;
+        }
+        @media (max-width: 600px) {
+            #conversationArea.layout-compact #aiOrbWrap {
+                flex: 0 1 240px !important;
+                min-height: 180px !important;
+            }
+        }
+        /* Ligne d'onde JUSTE sous l'orb, DANS le flow. Le trait visible est au
+           centre du canvas (55 px du haut) ; on remonte le wrap de 43 px
+           (= 12 px de `gap` flex + 31) pour que ce centre tombe ~24 px sous
+           l'orb — même écart qu'au-dessus. Le haut (transparent) du canvas
+           chevauche le bas de l'orb sans gêne visuelle.
+           left/right négatifs : bord à bord (compense le padding 24 px). */
+        #conversationArea.layout-compact #userWaveWrap {
+            position: relative;
+            top: auto;
+            height: 110px;
+            margin: -43px -24px 0;
+            flex: 0 0 auto;
+            z-index: 3;
+        }
+        @media (max-width: 600px) {
+            #conversationArea.layout-compact #userWaveWrap {
+                margin: -43px -12px 0;
+            }
+        }
+        /* Les boutons se calent en bas naturellement (le transcript flex:1
+           absorbe l'espace) : pas de margin-top auto nécessaire. */
+        #conversationArea.layout-compact .bottom-controls { margin-top: 0; }
+        /* Transcription DANS le flow, sous la ligne d'onde : prend uniquement
+           l'espace RESTANT après l'orb (flex-basis: 0) et scrolle en interne.
+           Point clé : basis 0 (pas `auto`) → la hauteur de la boîte ne dépend
+           PAS du nombre de messages, donc une longue transcription ne pousse
+           jamais l'orb ni ne le rétrécit. `min-height` la garde visible sur
+           écran court (c'est alors l'orb qui rétrécit). Messages ancrés en bas
+           (margin-top auto sur le 1er enfant), scroll vers le haut si ça déborde. */
+        #conversationArea.layout-compact:not(.viewing-history) #transcript {
+            display: flex !important;
+            flex-direction: column;
+            position: static;
+            transform: none;
+            flex: 1 1 0;
+            width: 100%;
+            max-width: 760px;
+            margin: 0 auto;
+            min-height: 120px;
+            height: auto;
+            max-height: none;
+            overflow-y: auto;
+            z-index: 4;
+            padding: 28px 18px 0;
+            gap: 6px;
+            background: transparent !important;
+            border: none !important;
+            /* padding-top ≥ hauteur du fondu (24px) : le 1er message reste sous
+               le dégradé quand on remonte tout en haut.
+               Masque dégradé en haut : les lignes qui débordent s'estompent. */
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 24px, #000 100%);
+                    mask-image: linear-gradient(to bottom, transparent 0, #000 24px, #000 100%);
+        }
+        #conversationArea.layout-compact:not(.viewing-history) #transcript > *:first-child {
+            margin-top: auto;
+        }
+        /* Ligne unique « Sender : message » — pas de bulle, fond neutre */
+        #conversationArea.layout-compact #transcript .transcript-msg {
+            display: flex;
+            flex-wrap: wrap; /* une image partagée passe à la ligne (cf. .vision-break) */
+            align-items: baseline;
+            gap: 8px;
+            align-self: stretch !important;
+            max-width: 100%;
+            padding: 2px 0 !important;
+            margin: 0;
+            background: transparent !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            text-align: left !important;
+            font-size: 0.95rem;
+            line-height: 1.45;
+        }
+        #conversationArea.layout-compact #transcript .transcript-msg .sender {
+            flex-shrink: 0;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-transform: none;
+            letter-spacing: 0;
+            margin: 0;
+            color: var(--accent);
+            opacity: 1;
+        }
+        #conversationArea.layout-compact #transcript .transcript-msg .sender::after { content: ' :'; }
+        #conversationArea.layout-compact #transcript .transcript-msg.user .sender { color: rgba(253, 230, 138, 1); }
+        [data-theme="light"] #conversationArea.layout-compact #transcript .transcript-msg.user .sender { color: var(--accent); }
+        #conversationArea.layout-compact #transcript .transcript-msg .text {
+            color: var(--text-primary);
+            flex: 1;
+            min-width: 0;
+        }
+        @media (max-width: 600px) {
+            #conversationArea.layout-compact:not(.viewing-history) #transcript {
+                max-width: calc(100% - 24px);
+            }
+        }
+        /* Fin de session : le transcript (flex:1) se réduit tout seul quand la
+           barre Copier/Exporter s'empile au-dessus du bouton — rien à forcer. */
+
+        /* BUBBLES
+           Ligne d'onde légèrement descendue (+35px), bulles décollées des
+           bords (padding 22px), fond unifié entre bulles IA et utilisateur. */
+        #conversationArea.layout-bubbles #userWaveWrap { top: 35px; }
+        @media (max-width: 600px) { #conversationArea.layout-bubbles #userWaveWrap { top: 15px; } }
+        /* L'orb reste à pleine opacité (identique aux autres vues) :
+           c'est la position des bulles latérales qui change, pas l'orb. */
+        #conversationArea.layout-bubbles:not(.viewing-history) #transcript {
+            display: flex !important;
+            flex-direction: column;
+            /* Pas de justify-content: flex-end (cf. compact) — bloque le scroll
+               quand ça déborde par le haut. À la place, margin-top: auto sur
+               le premier enfant (règle ci-dessous). */
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 220px;               /* au-dessus de la ligne d'onde (top: +35) + boutons */
+            margin: 0;
+            width: 100%;
+            max-width: none;
+            height: calc(100% - 340px);
+            padding: 14px 22px;          /* léger air sur les bords */
+            background: transparent !important;
+            border: none !important;
+            overflow-y: auto;
+            gap: 16px;
+            z-index: 4;
+            pointer-events: auto;
+        }
+        @media (max-width: 600px) {
+            #conversationArea.layout-bubbles:not(.viewing-history) #transcript {
+                bottom: 170px; padding: 12px 14px; height: calc(100% - 270px);
+            }
+        }
+        /* Bulles ancrées en bas quand ça tient, scrollables quand ça déborde. */
+        #conversationArea.layout-bubbles:not(.viewing-history) #transcript > *:first-child {
+            margin-top: auto;
+        }
+        /* Style des bulles : fond UNIFIÉ (le même pour IA et utilisateur),
+           seul l'alignement gauche/droite et le coin de queue diffèrent.
+           !important nécessaire pour écraser var(--transcript-ai/user) (qui
+           sont des rgba semi-transparents et laisseraient passer la teinte
+           de l'orb au centre de la bulle IA). */
+        #conversationArea.layout-bubbles #transcript .transcript-msg,
+        #conversationArea.layout-bubbles #transcript .transcript-msg.ai,
+        #conversationArea.layout-bubbles #transcript .transcript-msg.user {
+            max-width: 68%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: clamp(0.95rem, 1.4vw, 1.1rem);
+            line-height: 1.4;
+            box-shadow: 0 4px 14px var(--shadow);
+            background: var(--bg-secondary) !important;
+            border: 1px solid var(--border) !important;
+            color: var(--text-primary);
+            text-align: left;
+        }
+        /* L'orb (450 px, centré) ne doit pas être masqué par les bulles : dès
+           qu'il y a la place (grand écran), on borne le bord INTÉRIEUR des
+           bulles pour qu'il s'arrête ~210 px du centre — l'orb visible + son
+           halo culminent à ~172 px de rayon au volume max, ce qui laisse ~38 px
+           de marge. Les bulles étant ancrées aux bords extérieurs, limiter leur
+           largeur suffit. Sous 1000 px (petit écran), on garde des bulles larges
+           (pas la place de dégager l'orb — exception voulue). */
+        @media (min-width: 1000px) {
+            #conversationArea.layout-bubbles:not(.viewing-history) #transcript .transcript-msg,
+            #conversationArea.layout-bubbles:not(.viewing-history) #transcript .transcript-msg.ai,
+            #conversationArea.layout-bubbles:not(.viewing-history) #transcript .transcript-msg.user {
+                max-width: calc(50% - 210px);
+            }
+        }
+        /* Relecture d'historique en mode bulles : PAS d'orb à dégager → on
+           reprend le conteneur pleine largeur (comme en discussion live, au lieu
+           de la colonne centrée 780 px des autres vues d'historique) pour que les
+           bulles aillent aux bords, avec une largeur de bulle « chat » confortable
+           (sinon, la colonne étroite + le dégagement d'orb les tassaient). */
+        #conversationArea.viewing-history.layout-bubbles #transcript {
+            max-width: none;
+            gap: 16px; /* plus d'air entre bulles qu'en relecture texte (4px) */
+        }
+        #conversationArea.viewing-history.layout-bubbles #transcript .transcript-msg,
+        #conversationArea.viewing-history.layout-bubbles #transcript .transcript-msg.ai,
+        #conversationArea.viewing-history.layout-bubbles #transcript .transcript-msg.user {
+            max-width: min(72%, 620px);
+        }
+        #conversationArea.layout-bubbles #transcript .transcript-msg.ai {
+            align-self: flex-start;
+            border-bottom-left-radius: 6px;
+        }
+        #conversationArea.layout-bubbles #transcript .transcript-msg.user {
+            align-self: flex-end;
+            border-bottom-right-radius: 6px;
+        }
+        #conversationArea.layout-bubbles #transcript .transcript-msg .sender {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            opacity: 0.7;
+            margin-bottom: 3px;
+        }
+        #conversationArea.layout-bubbles #transcript .transcript-msg.ai .sender { color: var(--accent); }
+        #conversationArea.layout-bubbles #transcript .transcript-msg.user .sender { color: rgba(253, 230, 138, 1); }
+        [data-theme="light"] #conversationArea.layout-bubbles #transcript .transcript-msg.user .sender { color: var(--accent); }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+
+        /* Composant utilisé dans la modale de personnalisation d'un persona.
+           Le <select> natif reste dans le DOM (source de vérité pour le JS
+           existant qui lit `.value`), mais est visuellement masqué. Un bouton
+           + un panel construits en JS le remplacent. */
+        .vart-select {
+            position: relative;
+            width: 100%;
+        }
+        .vart-select-trigger {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font: inherit;
+            font-size: 0.9rem;
+            text-align: left;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.15s;
+        }
+        .vart-select-trigger:hover { border-color: var(--text-muted); }
+        .vart-select.open .vart-select-trigger,
+        .vart-select-trigger:focus-visible {
+            border-color: var(--accent);
+            outline: none;
+        }
+        .vart-select-trigger-label {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .vart-select-trigger-chevron {
+            flex-shrink: 0;
+            display: inline-flex;
+            color: var(--text-muted);
+            transition: transform 0.15s, color 0.15s;
+        }
+        .vart-select.open .vart-select-trigger-chevron {
+            transform: rotate(180deg);
+            color: var(--accent);
+        }
+
+        .vart-select-panel {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            z-index: 250;
+            max-height: 380px;
+            overflow: hidden;
+            padding: 6px;
+            background: var(--modal-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 12px 32px var(--shadow);
+            display: none;
+            flex-direction: column;
+        }
+        .vart-select.open .vart-select-panel { display: flex; }
+        /* En-tête fixe du panel (option hors groupe + onglets fournisseur),
+           puis liste défilante : seule la liste scrolle, les onglets restent
+           visibles. */
+        .vart-select-head {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;              /* option « par défaut » → onglets */
+            padding-bottom: 6px;   /* onglets → trait */
+            margin-bottom: 6px;    /* trait → première option : même rythme */
+            border-bottom: 1px solid var(--border);
+        }
+        .vart-select-list {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .vart-select-group {
+            padding: 10px 12px 4px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        .vart-select-group:first-child { padding-top: 4px; }
+
+        .vart-select-option {
+            padding: 9px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            transition: background 0.1s;
+        }
+        .vart-select-option:hover,
+        .vart-select-option.is-focused { background: var(--bg-hover); }
+        .vart-select-option.is-selected { background: var(--bg-active); }
+
+        .vart-select-option-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .vart-select-option-name {
+            flex: 1;
+            min-width: 0;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            /* Les noms de modèles longs (« Gemini 3.8 Live Extended Thinking »)
+               passent sur 2 lignes sur mobile plutôt que d'être tronqués. */
+            overflow-wrap: anywhere;
+        }
+        .vart-select-option-badge {
+            font-size: 0.68rem;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: var(--bg-hover);
+            color: var(--text-secondary);
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+        .vart-select-option.is-selected .vart-select-option-badge {
+            background: var(--modal-bg);
+            color: var(--accent);
+        }
+        .vart-select-option-hint {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            line-height: 1.35;
+        }
+        .vart-select-option.is-selected .vart-select-option-hint {
+            color: var(--text-secondary);
+        }
+        .vart-select-option.is-disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .vart-select-option.is-disabled:hover { background: transparent; }
+
+        /* Petits titres de sections dans la modale persona pour clarifier
+           les groupes de champs. */
+        /* Séparateur de section : le titre est INTÉGRÉ dans la barre (un trait
+           part du titre et remplit la largeur), avec de l'air avant et après. */
+        .persona-section-heading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-top: 2.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .persona-section-heading::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+        /* ── Phase 1 : postures pédagogiques, règles par blocs, mémoire ── */
+
+        /* Sélecteur de posture : 3 cartes côte à côte, sélection = cadre accent */
+        .posture-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .posture-card {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 8px;
+            text-align: center;
+            cursor: pointer;
+            color: var(--text-primary);
+            transition: border-color 0.15s, background 0.15s;
+            font-family: inherit;
+        }
+        .posture-card:hover { border-color: var(--accent); }
+        .posture-card.active {
+            border-color: var(--accent);
+            background: var(--bg-active);
+        }
+        .posture-card .posture-card-icon { font-size: 1.3rem; display: block; margin-bottom: 4px; }
+        .posture-card .posture-card-name { font-size: 0.82rem; font-weight: 600; }
+        .posture-card .posture-card-desc { font-size: 0.68rem; color: var(--text-secondary); margin-top: 2px; line-height: 1.3; }
+
+        /* Éditeur de règles : une ligne = type + texte + suppression */
+        .rules-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+        .rule-row {
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 8px;
+        }
+        .rule-row select { flex: 0 0 128px; font-size: 0.78rem; }
+        .rule-row textarea {
+            flex: 1;
+            min-height: 40px;
+            font-size: 0.82rem;
+            resize: vertical;
+        }
+        .rule-row .rule-delete {
+            flex: 0 0 auto;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 6px;
+            border-radius: 50%;
+            line-height: 1;
+        }
+        .rule-row .rule-delete:hover { color: var(--danger); background: var(--bg-hover); }
+
+        /* Bloc mémoire : visuellement distinct (c'est du contenu écrit par l'IA) */
+        .persona-memory-box textarea { min-height: 120px; font-size: 0.82rem; line-height: 1.5; }
+        .persona-memory-actions { display: flex; justify-content: flex-end; margin-top: 6px; }
+
+        /* Phase 2 : sources du persona */
+        .sources-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+        .sources-url-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+        .sources-url-row input { flex: 1; }
+        .source-row {
+            display: flex; align-items: center; gap: 8px;
+            background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: 10px; padding: 8px 10px; margin-top: 6px;
+            font-size: 0.8rem;
+        }
+        .source-row .source-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .source-row .source-meta { color: var(--text-secondary); font-size: 0.72rem; white-space: nowrap; }
+        .source-row .rule-delete { background: transparent; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1rem; padding: 4px; border-radius: 50%; line-height: 1; }
+        .source-row .rule-delete:hover { color: var(--danger); background: var(--bg-hover); }

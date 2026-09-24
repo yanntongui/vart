@@ -1,0 +1,283 @@
+        /* Écran d'accueil */
+        #emptyState {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 40px 28px;
+            overflow-y: auto;
+        }
+
+        .welcome-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+            /* Typo §15 : tracking légèrement négatif dès ~1.2rem — à cette taille,
+               les lettres « s'écartent » visuellement si on laisse 0. */
+            letter-spacing: -0.01em;
+        }
+
+        .welcome-subtitle {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            margin-bottom: 28px;
+            font-style: italic;
+        }
+
+        .welcome-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            width: 100%;
+            max-width: 860px;
+        }
+
+        /* Carte persona rectangulaire : portrait carré en haut, infos en dessous. */
+        .welcome-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.25s var(--spring), border-color 0.25s var(--spring), box-shadow 0.25s var(--spring);
+            background: var(--bg-secondary);
+        }
+
+        .welcome-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--shadow);
+        }
+
+        /* Apple §1 : réponse au presser, pas au relâchement — la carte s'enfonce
+           légèrement sous le doigt avant même que le clic ne soit validé. */
+        .welcome-card:active {
+            transform: scale(0.98);
+            transition-duration: 100ms;
+        }
+
+        /* Entrée en cascade des cartes à l'arrivée sur l'accueil. `backwards`
+           applique l'état initial (masqué) pendant le délai puis rend la main :
+           une fois l'animation finie, le survol (transform) fonctionne à nouveau. */
+        .welcome-grid.is-entering .welcome-card {
+            animation: welcomeCardIn 0.45s cubic-bezier(0.22, 0.9, 0.3, 1) backwards;
+            animation-delay: calc(var(--i, 0) * 45ms);
+        }
+        @keyframes welcomeCardIn {
+            from { opacity: 0; transform: translateY(14px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .welcome-grid.is-entering .welcome-card { animation: none; }
+        }
+
+        /* Chip sombre semi-opaque + points blancs + ombre : le bouton « … »
+           reste lisible quelle que soit la couleur de l'avatar en dessous
+           (contraste de luminance, indépendant de la teinte). */
+        .welcome-card-menu-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.55);
+            color: #fff;
+            font-size: 1.2rem;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.15s, background 0.15s;
+            z-index: 2;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+        }
+
+        .welcome-card:hover .welcome-card-menu-btn {
+            opacity: 1;
+        }
+
+        .welcome-card-menu-btn:hover {
+            background: rgba(0, 0, 0, 0.78);
+            color: #fff;
+        }
+
+        .welcome-card-menu {
+            position: absolute;
+            top: 38px;
+            right: 8px;
+            background: var(--modal-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 8px 24px var(--shadow);
+            z-index: 10;
+            min-width: 150px;
+            padding: 4px 0;
+            display: none;
+        }
+
+        .welcome-card-menu.open {
+            display: block;
+        }
+
+        .welcome-card-menu button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 9px 14px;
+            border: none;
+            background: transparent;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .welcome-card-menu button:hover {
+            background: var(--bg-hover);
+        }
+
+        .welcome-card-menu button.danger {
+            color: var(--danger);
+        }
+
+        /* Zone image carrée (haut de la carte) */
+        .welcome-card-avatar {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background: var(--bg-input);
+            overflow: hidden;
+        }
+        .welcome-card-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        /* Placeholder « pas d'image » : silhouette douce centrée */
+        .welcome-card-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--avatar-bg);
+            color: var(--avatar-fg);
+        }
+        .welcome-card-placeholder svg {
+            width: 62%;
+            height: 62%;
+            opacity: 0.55;
+        }
+
+        /* Portraits homme/femme (placeholder « pas d'image ») : le buste occupe
+           presque toute la place — collé en bas, avec une marge en haut et sur
+           les côtés. Ancrage en absolu pour ne pas déplacer les autres icônes
+           (neutre/transcripteur…) restées centrées. */
+        .welcome-card-placeholder,
+        .persona-header-placeholder,
+        .persona-item-placeholder { position: relative; overflow: hidden; }
+        .welcome-card-placeholder .avatar-portrait,
+        .persona-header-placeholder .avatar-portrait,
+        .persona-item-placeholder .avatar-portrait {
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            transform: translateX(-50%);
+            height: 90%;
+            width: auto;
+            opacity: 0.9;
+        }
+
+        /* Bandeau infos sous l'image (fond plein, plus de dégradé). */
+        .welcome-card-info {
+            padding: 12px 14px 14px;
+            text-align: center;
+        }
+        .welcome-card-name {
+            font-size: 1rem;
+            font-weight: 600;
+            line-height: 1.25;
+            color: var(--text-primary);
+        }
+        .welcome-card-desc {
+            margin-top: 4px;
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Badge « fiches à réviser » (Phase 4) — pastille en haut à droite de
+           la carte, cachée quand rien n'est dû. */
+        .review-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 3;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 9px;
+            border-radius: 999px;
+            background: var(--accent);
+            color: #fff;
+            font-size: 0.72rem;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+            cursor: help;
+        }
+        .review-badge[hidden] { display: none; }
+
+        /* Cartes utilitaires (Nouveau persona) — rectangle pointillé, image
+           remplacée par une icône centrée dans la zone carrée. */
+        .welcome-card-new {
+            border-style: dashed;
+            border-color: var(--accent);
+            color: var(--text-secondary);
+            background: var(--bg-active);
+        }
+        .welcome-card-new:hover {
+            color: var(--accent);
+            background: var(--bg-hover);
+        }
+        .welcome-card-new .welcome-card-avatar {
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .welcome-card-new .welcome-card-name {
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+        .welcome-card-new-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 14px;
+            border: 2px dashed var(--accent);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            transition: border-color 0.15s, color 0.15s, background 0.15s;
+        }
+        .welcome-card-new:hover .welcome-card-new-icon {
+            border-color: var(--accent);
+            background: var(--bg-active);
+        }
+

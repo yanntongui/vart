@@ -1,0 +1,433 @@
+
+        /* ============================================================
+           REFONTE « APPLE MODERNE » — calque visuel global
+           Surcharge la presentation d'origine sans toucher a la
+           structure HTML ni aux hooks JS : place en fin de feuille,
+           a specificite egale ces regles l'emportent.
+           ============================================================ */
+
+        /* ---------- Base & typographie ---------- */
+        body {
+            font-family: var(--font-stack);
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        /* Halo d'ambiance tres subtil derriere la zone principale :
+           donne de la profondeur au fond noir / gris clair sans
+           jamais nuire a la lisibilite. */
+        #main {
+            background:
+                radial-gradient(ellipse 70% 45% at 50% 0%,
+                    color-mix(in srgb, var(--accent) 7%, transparent),
+                    transparent 70%);
+        }
+
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-thumb {
+            background: color-mix(in srgb, var(--text-muted) 40%, transparent);
+            border-radius: 999px;
+            border: 3px solid transparent;
+            background-clip: padding-box;
+        }
+        ::-webkit-scrollbar-track { background: transparent; }
+
+        /* ---------- Sidebar : materiau verre depoli ---------- */
+        #sidebar {
+            background: color-mix(in srgb, var(--bg-sidebar) 82%, transparent);
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            border-right: 1px solid var(--border);
+        }
+        .sidebar-header {
+            border-bottom: none;
+            padding: 24px 20px 14px;
+        }
+        .logo {
+            font-weight: 800;
+            letter-spacing: 0.02em;
+        }
+        .conv-group-header,
+        .sidebar-section-title,
+        .settings-menu-section {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+        }
+        /* Champ de recherche style iOS : pastille grise pleine, sans bord */
+        .conv-search-input {
+            background: var(--bg-input);
+            border: none;
+            border-radius: var(--radius-s);
+        }
+        .conv-search-input:focus {
+            background: var(--bg-input);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
+        }
+        /* Conversations : items arrondis, actif = teinte accent + nom accent */
+        .persona-item { border-radius: 12px; }
+        .persona-item-avatar,
+        .persona-item-placeholder { border-radius: 12px; }
+        .persona-item.active { background: var(--bg-active); }
+        .persona-item.active .persona-item-name { color: var(--accent); }
+        /* Bouton principal de la sidebar : degrade de marque */
+        .btn-new-persona {
+            background: var(--brand-gradient);
+            border-radius: 12px;
+            padding: 11px;
+            box-shadow: 0 4px 14px var(--accent-glow);
+        }
+        .btn-new-persona:hover { transform: translateY(-1px); opacity: 1; box-shadow: 0 6px 18px var(--accent-glow); }
+        .btn-import-persona {
+            border: none;
+            background: var(--bg-input);
+            border-radius: 12px;
+            color: var(--text-secondary);
+        }
+        .sidebar-footer { border-top: 1px solid var(--border); }
+        .sidebar-footer button {
+            background: transparent;
+            border: none;
+            border-radius: var(--radius-s);
+        }
+        .sidebar-footer button:hover { background: var(--bg-hover); }
+
+        /* ---------- Ecran d'accueil : hero + cartes flottantes ---------- */
+        #emptyState { padding: 72px 32px 40px; }
+        .welcome-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            margin-bottom: 10px;
+            background: linear-gradient(120deg, var(--text-primary) 30%, var(--text-secondary) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .welcome-subtitle {
+            font-size: 1.02rem;
+            font-style: normal;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            max-width: 460px;
+            text-align: center;
+        }
+        .welcome-grid { gap: 20px; max-width: 960px; }
+        .welcome-card {
+            border: none;
+            border-radius: 22px;
+            box-shadow: var(--shadow-card);
+        }
+        .welcome-card:hover {
+            border-color: transparent;
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-card-hover);
+        }
+        .welcome-card-info { padding: 14px 16px 16px; }
+        .welcome-card-name { font-size: 1.02rem; font-weight: 700; letter-spacing: -0.01em; }
+        .welcome-card-menu-btn { border-radius: 999px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+        .review-badge { background: var(--danger); font-weight: 700; }
+        /* Carte « Nouveau persona » : tuile teintee accent, plus de pointilles */
+        .welcome-card-new {
+            border: none;
+            background: color-mix(in srgb, var(--accent) 8%, var(--bg-secondary));
+            color: var(--accent);
+        }
+        .welcome-card-new:hover { background: color-mix(in srgb, var(--accent) 14%, var(--bg-secondary)); }
+        .welcome-card-new-icon {
+            border: none;
+            border-radius: 50%;
+            background: var(--brand-gradient);
+            color: #fff;
+            box-shadow: 0 6px 16px var(--accent-glow);
+        }
+        .welcome-card-new:hover .welcome-card-new-icon { background: var(--brand-gradient); transform: scale(1.05); }
+        .welcome-card-new .welcome-card-name { color: var(--accent); }
+        .app-footer { color: var(--text-muted); font-size: 0.72rem; }
+
+        /* ---------- Zone de conversation ---------- */
+        #personaHeaderName {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+        #personaHeaderModel {
+            background: var(--bg-active);
+            color: var(--accent);
+            border-radius: 999px;
+            padding: 3px 12px;
+            font-weight: 600;
+        }
+        #personaHeaderModel:not(:empty)::before { content: none; }
+        #personaHeaderDesc { color: var(--text-secondary); }
+        #personaHeaderAvatar img,
+        #personaHeader .persona-header-placeholder {
+            width: 56px;
+            height: 56px;
+            box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--border);
+        }
+        .persona-header-info #sessionBar {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background: var(--bg-input);
+            border-radius: 999px;
+            padding: 4px 14px;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        /* Bouton de connexion : pilule pleine au degrade de marque */
+        .connect-btn {
+            background: var(--brand-gradient);
+            border: none;
+            color: #fff;
+            padding: 16px 38px;
+            box-shadow: 0 8px 24px var(--accent-glow);
+            font-weight: 700;
+        }
+        .connect-btn .icon-mic,
+        .connect-btn-icon { color: #fff; }
+        .connect-btn:hover { background: var(--brand-gradient); transform: scale(1.04); box-shadow: 0 10px 30px var(--accent-glow); }
+        .connect-btn.connected { background: var(--bg-input); box-shadow: none; }
+        .connect-btn.connected:hover { background: color-mix(in srgb, var(--danger) 16%, var(--bg-input)); border-color: transparent; }
+        [data-theme="light"] .connect-btn { background: var(--brand-gradient); border-color: transparent; }
+        [data-theme="light"] .connect-btn:hover { background: var(--brand-gradient); }
+        [data-theme="light"] .connect-btn.connected { background: var(--bg-input); color: var(--text-primary); }
+        #bottomMuteBtn {
+            background: var(--bg-input);
+            border: none;
+            border-radius: 999px;
+        }
+        #bottomMuteBtn:hover { background: var(--bg-hover); }
+        [data-theme="light"] #bottomMuteBtn { background: var(--bg-input); border: none; }
+        .btn-start {
+            background: var(--brand-gradient);
+            box-shadow: 0 6px 18px var(--accent-glow);
+        }
+        .btn-stop {
+            background: color-mix(in srgb, var(--danger) 14%, transparent);
+            border: none;
+            color: var(--danger);
+        }
+        .btn-stop:hover { background: color-mix(in srgb, var(--danger) 22%, transparent); border-color: transparent; }
+        .btn-mute { border: none; background: var(--bg-input); }
+        #status {
+            font-family: var(--font-stack);
+            letter-spacing: 0.12em;
+        }
+
+        /* ---------- Transcription : bulles facon iMessage ---------- */
+        #transcript {
+            border: none;
+            border-radius: var(--radius-l);
+            box-shadow: var(--shadow-card);
+        }
+        .transcript-msg {
+            border-radius: 18px;
+            padding: 10px 16px;
+            font-size: 0.92rem;
+        }
+        .transcript-msg .sender { opacity: 0.65; }
+        .transcript-msg.user {
+            background: var(--accent);
+            color: #fff;
+            border-bottom-right-radius: 6px;
+        }
+        .transcript-msg.user .sender { color: rgba(255,255,255,0.75); }
+        .transcript-msg.ai {
+            background: var(--transcript-ai);
+            border-bottom-left-radius: 6px;
+        }
+        /* Les règles du layout « bulles » utilisent des IDs : meme specificite
+           requise pour que la refonte l'emporte. */
+        #conversationArea.layout-bubbles #transcript .transcript-msg.user {
+            background: var(--accent);
+            color: #fff;
+        }
+        #conversationArea.layout-bubbles #transcript .transcript-msg.user .sender { color: rgba(255,255,255,0.75); }
+        #conversationArea.layout-bubbles #transcript .transcript-msg.ai {
+            background: var(--transcript-ai);
+        }
+        .transcript-header { font-family: var(--font-stack); }
+
+        /* ---------- Modales : grandes surfaces arrondies ---------- */
+        .modal {
+            border-radius: var(--radius-xl);
+            padding: 2rem 2.25rem;
+            box-shadow: var(--shadow-pop);
+            border: 1px solid var(--glass-border);
+        }
+        .modal::-webkit-scrollbar-track { margin: 28px 0; }
+        .modal h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 1.4rem;
+        }
+        .modal label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-transform: none;
+            letter-spacing: 0;
+            color: var(--text-secondary);
+        }
+        .modal input[type="password"],
+        .modal input[type="text"],
+        .modal select,
+        .modal textarea {
+            background: var(--bg-input);
+            border: 1px solid transparent;
+            border-radius: 12px;
+            padding: 11px 14px;
+            font-size: 0.92rem;
+        }
+        .modal input:focus, .modal select:focus, .modal textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+        }
+        .modal-close {
+            border-radius: 50%;
+            background: var(--bg-input);
+            color: var(--text-secondary);
+        }
+        .modal-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .btn-save {
+            background: var(--brand-gradient);
+            border-radius: 999px;
+            box-shadow: 0 4px 14px var(--accent-glow);
+            font-weight: 700;
+        }
+        .btn-cancel { border-radius: 999px; }
+        .btn-small { border-radius: 999px; }
+        .modal .hint { color: var(--text-muted); }
+
+        /* ---------- Dialogues ---------- */
+        .dialog-box {
+            border-radius: var(--radius-l);
+            box-shadow: var(--shadow-pop);
+            border: 1px solid var(--glass-border);
+        }
+        .dialog-title { font-size: 1.06rem; }
+        .dialog-btn { border: none; background: var(--bg-input); border-radius: 999px; }
+        .dialog-btn-primary { background: var(--brand-gradient); box-shadow: 0 4px 12px var(--accent-glow); }
+        .dialog-btn-danger { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); border: none; }
+
+        /* ---------- Configuration : nav pastilles + panneaux ---------- */
+        .config-nav-item {
+            border-radius: var(--radius-s);
+            margin: 1px 10px;
+            padding: 10px 14px;
+        }
+        .config-nav-item.active {
+            background: var(--bg-active);
+            color: var(--accent);
+            border-right: none;
+        }
+        .segmented {
+            border: none;
+            border-radius: 12px;
+            padding: 3px;
+        }
+        .segmented-item { border-radius: 9px; }
+        .segmented-thumb {
+            background: var(--bg-secondary);
+            border-radius: 9px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.18), 0 0 0 0.5px var(--border);
+        }
+                /* Cartes generiques (choix de mode, postures, affichage).
+           En sombre elles vivent sur une modale --modal-bg identique a
+           --bg-secondary : on les pose sur --bg-input pour le contraste.
+           En clair, on conserve la tuile blanche bordee (style App Store). */
+        .chooser-card,
+        .posture-card,
+        .display-card {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+        }
+        [data-theme="light"] .chooser-card,
+        [data-theme="light"] .posture-card,
+        [data-theme="light"] .display-card {
+            background: var(--bg-secondary);
+        }
+        .chooser-card:hover,
+        .posture-card:hover,
+        .display-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-card);
+        }
+        .chooser-card.active,
+        .posture-card.active,
+        .display-card.is-active {
+            border-color: var(--accent);
+            background: var(--bg-active);
+        }
+        /* Selects & pickers maison */
+        .model-picker-trigger,
+        .vart-select-head {
+            background: var(--bg-input);
+            border: 1px solid transparent;
+            border-radius: 12px;
+        }
+        .model-picker-menu,
+        .vart-select-panel {
+            border-radius: var(--radius-m);
+            box-shadow: var(--shadow-pop);
+            border: 1px solid var(--glass-border);
+        }
+        .vart-select-option.is-selected,
+        .model-picker-option.selected { background: var(--bg-active); }
+
+        /* ---------- Menu reglages & boutons flottants ---------- */
+        .settings-menu {
+            border-radius: 16px;
+            box-shadow: var(--shadow-pop);
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            padding: 6px;
+        }
+        .settings-menu-item { border-radius: 10px; }
+        .main-top-btn {
+            border-radius: 50%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-card);
+        }
+
+        /* ---------- Mic gate & tuiles diverses ---------- */
+        .mic-gate-card {
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-pop);
+            border: 1px solid var(--glass-border);
+        }
+        .mic-gate-btn {
+            background: var(--brand-gradient);
+            border-radius: 999px;
+            box-shadow: 0 4px 14px var(--accent-glow);
+            border: none;
+        }
+        /* Interrupteurs : vert systeme iOS */
+        .toggle-slider { border-radius: 999px; }
+        .toggle-slider::before { box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
+        .toggle-switch input:checked + .toggle-slider { background: var(--success); }
+        /* Barres de progression (stats, budget) */
+        .stats-bar-track,
+        .budget-bar { border-radius: 999px; background: var(--bg-input); }
+        .stats-bar-fill,
+        .budget-bar-fill { border-radius: 999px; background: var(--brand-gradient); }
+        /* Menus contextuels des cartes d'accueil */
+        .welcome-card-menu {
+            border-radius: 12px;
+            box-shadow: var(--shadow-pop);
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            border: 1px solid var(--glass-border);
+        }

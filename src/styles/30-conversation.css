@@ -1,0 +1,276 @@
+        /* Zone de conversation */
+        #conversationArea {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative; /* ancrage du sas micro */
+        }
+
+        /* Sas d'autorisation micro
+           - Affiché PAR-DESSUS toute la zone conversation tant que la classe
+             `mic-gated` est posée sur #conversationArea.
+           - Une fois l'autorisation accordée, on retire la classe et le sas
+             disparaît, révélant la page de conversation prête à démarrer. */
+        .mic-gate { display: none; }
+        #conversationArea.mic-gated > #conversationBody,
+        #conversationArea.mic-gated > #centralGlow { visibility: hidden; }
+        #conversationArea.mic-gated > .mic-gate {
+            display: flex;
+            position: absolute;
+            inset: 0;
+            z-index: 50;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: var(--bg-primary);
+        }
+        .mic-gate-card {
+            max-width: 460px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 14px;
+            padding: 36px 28px 30px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: 0 12px 40px var(--shadow);
+        }
+        .mic-gate-icon {
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            background: var(--bg-active);
+            border-radius: 50%;
+        }
+        .mic-gate-icon svg { width: 36px; height: 36px; }
+        .mic-gate-title {
+            font-size: 1.35rem;
+            font-weight: 600;
+            margin: 4px 0 0;
+        }
+        .mic-gate-desc {
+            font-size: 0.92rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin: 0;
+        }
+        .mic-gate-btn {
+            margin-top: 8px;
+            padding: 13px 28px;
+            border: none;
+            border-radius: 999px;
+            background: var(--accent);
+            color: #fff;
+            font: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            transition: transform 0.18s, opacity 0.18s;
+            box-shadow: 0 4px 16px rgba(79,195,247,0.3);
+        }
+        .mic-gate-btn:hover { transform: scale(1.03); }
+        .mic-gate-btn:active { transform: scale(0.97); }
+        .mic-gate-btn:disabled { opacity: 0.6; cursor: progress; transform: none; }
+        .mic-gate-error {
+            font-size: 0.82rem;
+            color: var(--danger);
+            min-height: 1em;
+            margin-top: 2px;
+        }
+
+        /* Fiche persona — bloc TITRE centré façon réf "JOSHUARD / ASSISTANT VOCAL"
+           Avatar à gauche, nom + modèle empilés, crayon (édition) au survol. */
+        #personaHeader {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 24px 18px 12px;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            margin: 0 auto;
+            width: 100%;
+            max-width: none;
+            flex-shrink: 0;
+            position: relative;
+            /* Passe au-dessus du #transcript en layout-bubbles (z-index: 4)
+               pour que les éléments interactifs du header (crayon d'édition,
+               bouton pilule du sélecteur de langue en mode Traducteur)
+               restent cliquables — le transcript est transparent sur cette
+               zone mais capte les clics via pointer-events: auto. */
+            z-index: 5;
+        }
+
+        /* On masque les contrôles inline qui étaient dans la barre du haut
+           (ils restent dans le DOM pour préserver la logique JS — clics,
+           raccourcis, etc.). Le #sessionBar n'est plus dans cette liste :
+           il est maintenant DANS .persona-header-info (sous le modèle) et
+           affiche le temps + le coût de la conversation en cours. */
+        /* Le bloc #controls inline dans le header est TOUJOURS masqué (mode
+           persona ET mode transcripteur) : dans les deux cas on utilise
+           désormais le bouton pill du bas (.bottom-controls). Le div reste
+           dans le DOM pour ne pas casser les hooks JS existants. */
+        #personaHeader > #controls {
+            display: none !important;
+        }
+        /* Dans le sessionBar : on ne garde visuellement que le temps et le
+           coût. Le modèle est déjà affiché plus haut (#personaHeaderModel)
+           et les tokens ne sont pas demandés. */
+        #personaHeader #sessionBar #sessionModel,
+        #personaHeader #sessionBar #sessionTokens {
+            display: none !important;
+        }
+        /* Le sessionBar sous le modèle : centré, plus discret que la version
+           barre du haut. Visible pendant la conversation (temps + coût live),
+           À LA FIN de la conversation, et EN RELECTURE d'historique (temps + coût
+           de la discussion). Masqué à l'état inactif. */
+        .persona-header-info #sessionBar {
+            display: none;
+            justify-content: center;
+            margin-top: 6px;
+            font-size: 0.72rem;
+            letter-spacing: 0.06em;
+            color: var(--text-secondary);
+            opacity: 0.9;
+        }
+        #conversationArea.is-running .persona-header-info #sessionBar,
+        #conversationArea.session-ended .persona-header-info #sessionBar,
+        #conversationArea.viewing-history .persona-header-info #sessionBar {
+            display: flex;
+        }
+        /* La pastille « live » verte ne pulse que pendant une conversation active. */
+        #conversationArea:not(.is-running) #sessionBar .session-dot.live { display: none; }
+
+        /* Avatar persona en cercle à gauche du nom */
+        #personaHeaderAvatar img,
+        #personaHeader .persona-header-placeholder {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        #personaHeader .transcripteur-placeholder {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+        }
+
+        /* Bloc nom + modèle, centré horizontalement */
+        .persona-header-info {
+            flex: 0 0 auto;
+            text-align: center;
+            min-width: 0;
+        }
+
+        /* Reset de la ligne nom + badge modèle (la mise en page change ici) */
+        .persona-header-name-row {
+            display: block;
+        }
+
+        #personaHeaderName {
+            font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+            font-size: 1.7rem;
+            font-weight: 300;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            line-height: 1.1;
+            margin: 0;
+        }
+
+        #personaHeaderModel {
+            font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+            font-size: 0.7rem;
+            font-weight: 400;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            opacity: 0.95;
+        }
+        /* Le badge modèle dans la nouvelle mise en page n'a plus de pastille devant */
+        #personaHeaderModel:not(:empty)::before { content: none; }
+
+        /* Description : masquée par défaut (gardée dans le DOM pour compat).
+           Réaffichée sous le modèle en conversation persona live (cf. règle
+           ci-dessous). */
+        #personaHeaderDesc { display: none; }
+
+        /* Description du persona, affichée sous le nom + modèle en conversation
+           persona uniquement. Exclut Traducteur (puces de langue), Transcripteur
+           et la relecture d'historique (date), qui réutilisent #personaHeaderDesc
+           à d'autres fins. Clampée à 2 lignes pour ne jamais déséquilibrer
+           le header. */
+        body.in-conversation:not(.traducteur-active):not(.transcripteur-active) #conversationArea:not(.viewing-history):not(.transcripteur-mode) #personaHeaderDesc:not(:empty) {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            overflow: hidden;
+            max-width: 440px;
+            margin: 8px auto 0;
+            font-size: 0.82rem;
+            font-weight: 400;
+            line-height: 1.4;
+            letter-spacing: 0.01em;
+            text-transform: none;
+            color: var(--text-secondary);
+            opacity: 0.85;
+            text-align: center;
+        }
+
+        /* Crayon d'édition — invisible par défaut, apparaît au survol du groupe */
+        #personaHeader #editPersonaBtn {
+            opacity: 0;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 6px;
+            border-radius: 50%;
+            font-size: 1.05rem;
+            line-height: 1;
+            cursor: pointer;
+            transition: opacity 0.18s, background 0.18s, color 0.18s;
+            margin-left: 4px;
+        }
+        #personaHeader:hover #editPersonaBtn,
+        #personaHeader #editPersonaBtn:focus-visible {
+            opacity: 1;
+            color: var(--text-primary);
+        }
+        #personaHeader #editPersonaBtn:hover {
+            background: var(--bg-active);
+            color: var(--accent);
+        }
+        [data-theme="light"] #personaHeader #editPersonaBtn:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        /* Cacher le bouton dupliquer (déjà présent ailleurs dans le code) */
+        #personaHeader #duplicatePersonaBtn { display: none !important; }
+
+        /* Couleurs du placeholder avatar (forme/dimensions définies plus haut dans
+           #personaHeader .persona-header-placeholder) */
+        .persona-header-placeholder {
+            background: var(--avatar-bg);
+            color: var(--avatar-fg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .persona-header-placeholder svg {
+            width: 60%;
+            height: 60%;
+            opacity: 0.7;
+        }
+

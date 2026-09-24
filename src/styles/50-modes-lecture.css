@@ -1,0 +1,706 @@
+        /* FIN DE SESSION
+           Quand une conversation / traduction / transcription vient de se
+           terminer (classe `session-ended` posée par stopConversation(),
+           retirée par resetTranscript()), on révèle les boutons
+           Copier/Exporter pour récupérer le texte produit.
+
+           Placement : juste AU-DESSUS du bouton « Démarrer » (#connectBtn).
+           stopConversation() déplace la barre DANS .bottom-controls (le même
+           conteneur flex que le bouton principal) ; on passe ce conteneur en
+           colonne pour empiler [Copier/Exporter] puis [Démarrer]. Résultat
+           centré et aligné, identique quel que soit le layout. La barre est
+           remise à sa place d'origine par resetTranscript() / viewConversation().
+           :not(.is-running) + :not(.viewing-history) montent la spécificité
+           à (1,4,0) pour battre les règles de masquage ci-dessus et celle
+           du mode transcripteur. */
+        #conversationArea.session-ended:not(.is-running):not(.viewing-history) .bottom-controls {
+            flex-direction: column;
+            gap: 14px;
+        }
+        #conversationArea.session-ended:not(.is-running):not(.viewing-history) .transcript-header {
+            display: flex !important;
+            flex-wrap: wrap;
+            width: auto;
+            max-width: none;
+            margin: 0;
+            gap: 10px;
+            justify-content: center;
+        }
+        /* Le div-espaceur (flex:1) qui poussait les boutons à droite dans le
+           flux normal n'a plus lieu d'être ici. */
+        #conversationArea.session-ended:not(.is-running):not(.viewing-history) .transcript-header > div:first-child {
+            display: none;
+        }
+        /* Boutons assortis au bouton principal (.connect-btn) : même pilule
+           glass, en plus petit, pour un ensemble cohérent. On garde le texte
+           à pleine luminance et un survol par éclaircissement (pas de teinte
+           seule — lisible en daltonisme). */
+        #conversationArea.session-ended:not(.is-running):not(.viewing-history) .transcript-export-btn {
+            display: inline-flex !important;
+            margin-left: 0;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.03);
+            -webkit-backdrop-filter: blur(24px);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            font-size: 0.62rem;
+            font-weight: 500;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+        #conversationArea.session-ended:not(.is-running):not(.viewing-history) .transcript-export-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+        }
+        [data-theme="light"] #conversationArea.session-ended:not(.is-running):not(.viewing-history) .transcript-export-btn {
+            background: rgba(0, 0, 0, 0.03);
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        [data-theme="light"] #conversationArea.session-ended:not(.is-running):not(.viewing-history) .transcript-export-btn:hover {
+            background: rgba(0, 0, 0, 0.06);
+        }
+
+        /* Mode lecture d'une discussion sauvegardée : on cache tout l'audio/visualisation
+           ET tous les boutons de pilotage (rien à démarrer en lecture seule). */
+        .viewing-history #aiOrbWrap,
+        .viewing-history #userWaveWrap,
+        .viewing-history #userLiveText,
+        .viewing-history #aiLiveText,
+        .viewing-history #bottomMuteBtn,
+        .viewing-history .bottom-controls,
+        .viewing-history #status,
+        .viewing-history #controls,
+        .viewing-history #editPersonaBtn {
+            display: none !important;
+        }
+        /* LECTURE D'UNE DISCUSSION TERMINÉE
+           Layout épuré, cohérent avec le reste : plus de cadre encadré,
+           typographie confortable, date visible sous le nom, boutons
+           Copier/Exporter accessibles en haut à droite. */
+
+        /* Afficher la date sous le nom (personaHeaderDesc contient la date
+           formatée en viewing-history — cf. viewConversation()). */
+        .viewing-history #personaHeaderDesc {
+            display: block !important;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+            letter-spacing: 0.02em;
+        }
+
+        /* En mode Traducteur, personaHeaderDesc héberge le bouton pilule
+           « Vers l'anglais 🇬🇧 ▾ » qui ouvre le sélecteur de langue.
+           On le force visible malgré la règle globale `display: none`. */
+        body.traducteur-active #personaHeaderDesc,
+        body.transcripteur-active #personaHeaderDesc {
+            display: block !important;
+            margin-top: 2px;
+        }
+
+        /* Info-bulle de coût (chips / onglets moteur du Traducteur et du
+           Transcripteur). Affichage instantané, fond inversé pour un fort
+           contraste de luminance dans les deux thèmes. */
+        .vart-tip {
+            position: fixed;
+            z-index: 1000;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 8px 14px;
+            border-radius: 9px;
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            box-shadow: 0 8px 24px var(--shadow);
+            white-space: nowrap;
+            line-height: 1.3;
+        }
+        .vart-tip::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: -6px;
+            width: 12px;
+            height: 12px;
+            transform: translateX(-50%) rotate(45deg);
+            background: var(--text-primary);
+            border-radius: 2px;
+        }
+        .vart-tip.below::after { bottom: auto; top: -6px; }
+        .vart-tip-model {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.04em;
+            opacity: 0.72;
+        }
+        .vart-tip-price { font-size: 0.95rem; font-weight: 700; }
+
+        /* En mode Traducteur, on empile avatar au-dessus du nom pour que
+           l'ensemble soit parfaitement centré horizontalement (sinon la
+           largeur de l'avatar décale le titre à droite du milieu). */
+        body.traducteur-active #personaHeader,
+        body.transcripteur-active #personaHeader {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Rendre visibles les boutons Copier/Exporter en viewing-history
+           uniquement (masqués partout ailleurs par la règle globale
+           `.transcript-export-btn { display: none !important; }`).
+           Style pilule verre assorti au bouton principal, comme en fin de
+           session — cohérent dans toute l'app. */
+        .viewing-history .transcript-export-btn {
+            display: inline-flex !important;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.03);
+            -webkit-backdrop-filter: blur(24px);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            font-size: 0.62rem;
+            font-weight: 500;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+        .viewing-history .transcript-export-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+        }
+        [data-theme="light"] .viewing-history .transcript-export-btn {
+            background: rgba(0, 0, 0, 0.03);
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        [data-theme="light"] .viewing-history .transcript-export-btn:hover {
+            background: rgba(0, 0, 0, 0.06);
+        }
+
+        /* Bouton « Démarrer une nouvelle conversation » tout en bas de la
+           relecture, avec sa note discrète. Masqué partout ailleurs. */
+        #historyNewConv { display: none; }
+        .viewing-history #historyNewConv {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            order: 99;
+            flex-shrink: 0;
+            max-width: 780px;
+            width: 100%;
+            margin: 4px auto 0;
+            padding: 12px 24px 12px;
+            text-align: center;
+        }
+        .history-new-conv-hint {
+            margin: 0;
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            letter-spacing: 0.01em;
+        }
+
+        /* Transcript en lecture : conteneur épuré, largeur confortable
+           pour la lecture, plus de bordure ni fond secondaire. */
+        .viewing-history #transcript {
+            display: flex !important;
+            opacity: 1 !important;
+            background: transparent !important;
+            border: none !important;
+            border-radius: 0 !important;
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 28px 24px 24px;
+            gap: 4px;
+            /* padding-top ≥ hauteur du fondu (24px) : le 1er message reste sous
+               le dégradé et n'est pas estompé quand on est tout en haut.
+               Masque dégradé haut/bas pour un fondu doux quand ça scrolle. */
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+                    mask-image: linear-gradient(to bottom, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+        }
+
+        /* Header du transcript (boutons export) : centré et aéré, au-dessus
+           du texte, dans la même largeur que le contenu. */
+        .viewing-history .transcript-header {
+            display: flex !important;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            max-width: 780px;
+            margin: 0 auto 10px;
+            padding: 6px 24px 0;
+        }
+        /* Le div-espaceur (flex:1) du header pousserait les boutons à droite :
+           on le neutralise pour un vrai centrage. */
+        .viewing-history .transcript-header > div:first-child { display: none; }
+        .viewing-history .transcript-export-btn { margin-left: 0; }
+
+        /* Typographie du texte fluide en lecture — plus grand et plus aéré
+           que la version live pour lire confortablement. */
+        .viewing-history .transcript-flowing-text {
+            font-size: 1rem;
+            line-height: 1.75;
+            margin: 0.35em 0;
+            color: var(--text-primary);
+        }
+
+        /* Bulles (mode discussion IA) : conservent leur look mais dans le
+           conteneur transparent, plus aérées. */
+        .viewing-history #transcript .transcript-msg {
+            padding: 12px 16px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        .viewing-history #transcript .transcript-msg .sender {
+            font-size: 0.68rem;
+            margin-bottom: 4px;
+        }
+        .viewing-history-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-left: 6px;
+        }
+        .conv-item-date {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+        .sidebar-empty {
+            padding: 18px 16px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            font-style: italic;
+        }
+
+        .transcript-empty {
+            color: var(--text-muted);
+            font-style: italic;
+            font-size: 0.85rem;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .transcript-msg {
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 0.88rem;
+            line-height: 1.5;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .transcript-msg.user {
+            background: var(--transcript-user);
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .transcript-msg.ai {
+            background: var(--transcript-ai);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .transcript-msg .sender {
+            font-weight: 600;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 3px;
+            opacity: 0.6;
+        }
+
+        .transcript-msg.user .sender { color: var(--accent); }
+        .transcript-msg.ai .sender { color: var(--accent2); }
+
+        /*
+           Le mode transcripteur réutilise TOUTE l'infrastructure visuelle
+           du mode conversation (orb central + wave + boutons pill) — seul
+           l'usage change : pas d'IA, on transcrit le micro utilisateur en
+           continu. L'orb réagit au niveau du micro (dans drawAIOrb, via
+           le flag isTranscripteurMode), la wave déjà utilisateur, et la
+           transcription s'affiche en texte fluide (paragraphes) dans la
+           même zone que le layout compact.
+        */
+
+        /* Avatar « T » du transcripteur — même forme (46 px rond) et même
+           accent bleu que les avatars persona, pas de gradient violet parasite. */
+        .transcripteur-placeholder {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+            font-size: 1.4rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            flex-shrink: 0;
+        }
+
+        /* Même variante dans la sidebar (persona-item) — round et --accent. */
+        .persona-item .transcripteur-sidebar-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+            font-size: 1.05rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        /* Mode transcripteur — layout minimal :
+             Header
+             │
+             Transcript (fill, dans le flow, avec fade top)
+             │
+             Wave (ligne horizontale)
+             │
+             Bouton pill
+           Pas d'orb, pas de layout switcher. */
+        .transcripteur-mode #userViz,
+        .transcripteur-mode #aiOrbWrap,
+        .transcripteur-mode #aiLiveText,
+        .transcripteur-mode #userLiveText {
+            display: none !important;
+        }
+
+        /* Ordre visuel en transcripteur (via flex `order`, pas de manip DOM) :
+           header → transcript (fill) → wave → boutons → status. Le DOM place
+           `#transcript` en dernier ; on l'avance visuellement pour qu'il
+           occupe la zone au-dessus de la ligne d'onde. */
+        .transcripteur-mode #personaHeader   { order: 0; }
+        .transcripteur-mode #transcript      { order: 1; }
+        .transcripteur-mode #userWaveWrap    { order: 2; }
+        .transcripteur-mode .bottom-controls { order: 3; }
+        .transcripteur-mode #status          { order: 4; }
+
+        /* Transcript dans le flow, occupe l'espace au-dessus de la wave.
+           Overrides !important pour battre les rules des layout-classic/compact/bubbles
+           au cas où une classe layout traînerait en localStorage. */
+        #conversationArea.transcripteur-mode:not(.viewing-history) .transcript-header {
+            display: none !important;
+        }
+        #conversationArea.transcripteur-mode:not(.viewing-history) #transcript {
+            display: flex !important;
+            flex-direction: column;
+            flex: 1;
+            position: static !important;
+            top: auto !important;
+            left: auto !important;
+            right: auto !important;
+            bottom: auto !important;
+            transform: none !important;
+            width: 100%;
+            max-width: 800px;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            margin: 0 auto;
+            padding: 44px 22px 24px;
+            gap: 6px;
+            background: transparent !important;
+            border: none !important;
+            overflow-y: auto;
+            /* padding-top ≥ hauteur du fondu (40px) : la 1re ligne reste sous le
+               dégradé quand on est tout en haut.
+               Masque dégradé en haut : les vieilles lignes s'estompent en
+               remontant au lieu d'être coupées net. */
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 40px, #000 100%);
+                    mask-image: linear-gradient(to bottom, transparent 0, #000 40px, #000 100%);
+        }
+        /* Le contenu se remplit depuis le HAUT — on ANNULE explicitement le
+           `margin-top: auto` que les layouts compact/bubbles collent sur le
+           premier enfant du transcript (leurs règles s'appliquent aussi en
+           transcripteur si le user avait sélectionné une de ces vues avant
+           d'entrer en mode transcripteur). !important pour battre ces règles. */
+        #conversationArea.transcripteur-mode:not(.viewing-history) #transcript > *:first-child {
+            margin-top: 0 !important;
+        }
+
+        /* Wave à sa position naturelle dans le flow, juste sous le transcript.
+           On annule le top: -25 hérité du layout par défaut pour éviter de
+           faire remonter la ligne dans le texte de la transcription. */
+        .transcripteur-mode #userWaveWrap {
+            top: 0 !important;
+        }
+
+        /* Cache le sélecteur de disposition dans le menu réglages en mode
+           transcripteur — les layouts classic/compact/bubbles n'ont aucun
+           sens ici, il n'y a qu'une seule vue. Le body reçoit la classe
+           `transcripteur-active` via selectTranscripteur() / showEmptyState(). */
+        body.transcripteur-active #settingsMenu [data-menu-group="layout"] {
+            display: none !important;
+        }
+        /* Et comme l'item « Paramètres du persona » est lui aussi caché dans ce
+           mode, le menu serait vide : on masque carrément le bouton ⚙. Le
+           moteur et la langue de transcription se règlent via la pilule sous
+           le titre (comme le Traducteur). */
+        body.transcripteur-active #settingsBtn { display: none !important; }
+
+        /* Style du texte fluide (paragraphes) dans la zone transcript. */
+        .transcript-flowing-text {
+            margin: 0.2em 0;
+            line-height: 1.7;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        .transcript-pause-separator {
+            border: none;
+            border-top: 1px dashed var(--text-muted);
+            margin: 12px 0;
+            opacity: 0.4;
+        }
+
+        .transcript-flowing-text .non-speech {
+            font-style: italic;
+            color: var(--text-muted);
+        }
+
+        .btn-pause {
+            background: none;
+            border: 2px solid var(--accent);
+            color: var(--accent);
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .btn-pause:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .btn-pause.paused {
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .btn-pause.paused:hover {
+            background: var(--success);
+            color: #fff;
+        }
+
+        /* Transcripteur — image carrée pleine, avec une icône de transcription
+           (document + lignes de texte) centrée sur un fond dégradé --accent
+           pour rester cohérent avec le reste de l'interface. */
+        .welcome-card .transcripteur-card-icon {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .welcome-card .transcripteur-card-icon svg {
+            width: 46%;
+            height: 46%;
+        }
+
+        /* Traducteur — mêmes règles visuelles que le transcripteur mais avec
+           un dégradé distinct (turquoise → violet) pour être reconnaissable
+           sans reposer sur la couleur uniquement : l'icône (flèches
+           bidirectionnelles) est différente. */
+        .traducteur-placeholder {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #26c6da, #7e57c2);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .traducteur-placeholder svg { width: 60%; height: 60%; }
+
+        .persona-item .traducteur-sidebar-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #26c6da, #7e57c2);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .persona-item .traducteur-sidebar-icon svg { width: 60%; height: 60%; }
+
+        .welcome-card .traducteur-card-icon {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #26c6da, #7e57c2);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .welcome-card .traducteur-card-icon svg {
+            width: 46%;
+            height: 46%;
+        }
+
+        /* Sélecteur de langue cliquable dans le header du mode Traducteur —
+           puce arrondie, format lisible. */
+        .traducteur-lang-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 18px;
+            margin-top: 8px;
+            background: var(--bg-hover);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            color: var(--text-primary);
+            font: inherit;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s, color 0.15s;
+        }
+        .traducteur-lang-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .traducteur-lang-btn .flag {
+            font-size: 1.35rem;
+            line-height: 1;
+        }
+        .traducteur-lang-btn .chev {
+            display: inline-flex;
+            color: var(--text-muted);
+            font-size: 1.1em;
+        }
+        /* Puce unique moteur + langue sous le nom en mode Traducteur. */
+        .traducteur-select-btn .tl-engine {
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            color: var(--accent);
+            background: var(--bg-active);
+            border-radius: 6px;
+            padding: 3px 8px;
+        }
+
+        .traducteur-lang-menu {
+            position: absolute;
+            z-index: 200;
+            padding: 8px;
+            background: var(--modal-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            box-shadow: 0 12px 32px var(--shadow);
+            display: none;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 260px;
+            max-height: 380px;
+            overflow-y: auto;
+        }
+        .traducteur-lang-menu.open { display: flex; }
+        .traducteur-lang-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: background 0.1s;
+        }
+        .traducteur-lang-menu-item:hover { background: var(--bg-hover); }
+        .traducteur-lang-menu-item.is-selected { background: var(--bg-active); color: var(--accent); font-weight: 500; }
+        /* Largeur fixe pour aligner les noms même sans drapeau. */
+        .traducteur-lang-menu-item .flag { font-size: 1.35rem; line-height: 1; width: 1.6rem; text-align: center; flex: 0 0 auto; }
+
+        /* Panneau de sélection à onglets (moteur) + recherche + liste. */
+        .traducteur-select-panel {
+            overflow: visible;
+            gap: 8px;
+            width: 300px;
+            min-width: 300px;
+        }
+        .traducteur-select-panel .tl-tabs {
+            display: flex;
+            gap: 4px;
+            padding: 3px;
+            background: var(--bg-input);
+            border-radius: 10px;
+        }
+        .traducteur-select-panel .tl-tab {
+            flex: 1;
+            padding: 8px 10px;
+            border: none;
+            border-radius: 8px;
+            background: none;
+            color: var(--text-secondary);
+            font: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .traducteur-select-panel .tl-tab:hover { color: var(--text-primary); }
+        .traducteur-select-panel .tl-tab.is-active {
+            background: var(--bg-active);
+            color: var(--accent);
+        }
+        /* Moteur dont la clé API n'est pas renseignée : grisé, le clic ouvre
+           la configuration des clés (cf. openEngineLangPanel). */
+        .traducteur-select-panel .tl-tab.is-disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+        .traducteur-select-panel .tl-tab.is-disabled:hover { color: var(--text-secondary); }
+        .vart-tip-note { font-size: 0.72rem; font-weight: 600; opacity: 0.85; }
+        .traducteur-select-panel .tl-search {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 9px 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font: inherit;
+            font-size: 0.92rem;
+        }
+        .traducteur-select-panel .tl-search:focus { outline: none; border-color: var(--accent); }
+        .traducteur-select-panel .tl-lang-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .traducteur-select-panel .tl-empty {
+            padding: 16px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
