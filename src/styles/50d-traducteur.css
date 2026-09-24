@@ -1,0 +1,181 @@
+        /* Traducteur — mêmes règles visuelles que le transcripteur mais avec
+           un dégradé distinct (turquoise → violet) pour être reconnaissable
+           sans reposer sur la couleur uniquement : l'icône (flèches
+           bidirectionnelles) est différente. */
+        .traducteur-placeholder {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #26c6da, #7e57c2);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .traducteur-placeholder svg { width: 60%; height: 60%; }
+
+        .persona-item .traducteur-sidebar-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #26c6da, #7e57c2);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .persona-item .traducteur-sidebar-icon svg { width: 60%; height: 60%; }
+
+        .welcome-card .traducteur-card-icon {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #26c6da, #7e57c2);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .welcome-card .traducteur-card-icon svg {
+            width: 46%;
+            height: 46%;
+        }
+
+        /* Sélecteur de langue cliquable dans le header du mode Traducteur —
+           puce arrondie, format lisible. */
+        .traducteur-lang-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 18px;
+            margin-top: 8px;
+            background: var(--bg-hover);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            color: var(--text-primary);
+            font: inherit;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s, color 0.15s;
+        }
+        .traducteur-lang-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .traducteur-lang-btn .flag {
+            font-size: 1.35rem;
+            line-height: 1;
+        }
+        .traducteur-lang-btn .chev {
+            display: inline-flex;
+            color: var(--text-muted);
+            font-size: 1.1em;
+        }
+        /* Puce unique moteur + langue sous le nom en mode Traducteur. */
+        .traducteur-select-btn .tl-engine {
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            color: var(--accent);
+            background: var(--bg-active);
+            border-radius: 6px;
+            padding: 3px 8px;
+        }
+
+        .traducteur-lang-menu {
+            position: absolute;
+            z-index: 200;
+            padding: 8px;
+            background: var(--modal-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            box-shadow: 0 12px 32px var(--shadow);
+            display: none;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 260px;
+            max-height: 380px;
+            overflow-y: auto;
+        }
+        .traducteur-lang-menu.open { display: flex; }
+        .traducteur-lang-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: background 0.1s;
+        }
+        .traducteur-lang-menu-item:hover { background: var(--bg-hover); }
+        .traducteur-lang-menu-item.is-selected { background: var(--bg-active); color: var(--accent); font-weight: 500; }
+        /* Largeur fixe pour aligner les noms même sans drapeau. */
+        .traducteur-lang-menu-item .flag { font-size: 1.35rem; line-height: 1; width: 1.6rem; text-align: center; flex: 0 0 auto; }
+
+        /* Panneau de sélection à onglets (moteur) + recherche + liste. */
+        .traducteur-select-panel {
+            overflow: visible;
+            gap: 8px;
+            width: 300px;
+            min-width: 300px;
+        }
+        .traducteur-select-panel .tl-tabs {
+            display: flex;
+            gap: 4px;
+            padding: 3px;
+            background: var(--bg-input);
+            border-radius: 10px;
+        }
+        .traducteur-select-panel .tl-tab {
+            flex: 1;
+            padding: 8px 10px;
+            border: none;
+            border-radius: 8px;
+            background: none;
+            color: var(--text-secondary);
+            font: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .traducteur-select-panel .tl-tab:hover { color: var(--text-primary); }
+        .traducteur-select-panel .tl-tab.is-active {
+            background: var(--bg-active);
+            color: var(--accent);
+        }
+        /* Moteur dont la clé API n'est pas renseignée : grisé, le clic ouvre
+           la configuration des clés (cf. openEngineLangPanel). */
+        .traducteur-select-panel .tl-tab.is-disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+        .traducteur-select-panel .tl-tab.is-disabled:hover { color: var(--text-secondary); }
+        .vart-tip-note { font-size: 0.72rem; font-weight: 600; opacity: 0.85; }
+        .traducteur-select-panel .tl-search {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 9px 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font: inherit;
+            font-size: 0.92rem;
+        }
+        .traducteur-select-panel .tl-search:focus { outline: none; border-color: var(--accent); }
+        .traducteur-select-panel .tl-lang-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .traducteur-select-panel .tl-empty {
+            padding: 16px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+

@@ -1,0 +1,114 @@
+        /* Pastille « vision », posée JUSTE SOUS la pastille de tarif : même
+           forme, même graisse, avec en tête l'icône de la modalité acceptée
+           (caméscope = vidéo en direct, cadre photo = images fixes). */
+        .vision-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: var(--bg-hover);
+            color: var(--text-secondary);
+            font-size: 0.68rem;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+        .vision-badge-icon {
+            display: inline-flex;
+            width: 12px;
+            height: 12px;
+            flex: 0 0 auto;
+        }
+        .vision-badge-icon svg { width: 12px; height: 12px; }
+        /* Les pastilles d'une option s'empilent à droite du nom : tarif en
+           haut, vision en dessous, toutes deux calées sur le bord droit. */
+        .vart-select-option-badges {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+            flex: 0 0 auto;
+        }
+        .vart-select-option.is-selected .vision-badge,
+        .model-picker-option.selected .vision-badge {
+            background: var(--modal-bg);
+            color: var(--accent);
+        }
+        /* Même empilement dans les .model-picker, où le tarif est une ligne
+           de texte : la pastille vient juste en dessous, calée à gauche. */
+        .model-picker-vision,
+        .model-picker-option-vision { margin-top: 2px; }
+
+        #status.error { color: var(--danger); }
+        #status.connected { color: var(--success); }
+        #status.searching { color: var(--accent); }
+
+        .transcript-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: -14px;
+        }
+
+        .transcript-export-btn {
+            margin-left: auto;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            cursor: pointer;
+            padding: 5px 10px;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .transcript-export-btn .icon {
+            filter: none;
+            opacity: 1;
+        }
+
+        .transcript-export-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        #transcript {
+            width: 100%;
+            max-width: 800px;
+            flex: 1;
+            min-height: 120px;
+            max-height: none;
+            overflow-y: auto;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition:
+                background 0.3s,
+                padding 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s,
+                bottom 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                left 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                right 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                max-width 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Mode discussion : on cache la transcription chat (bulles) et les boutons d'export
+           — données toujours peuplées en arrière-plan pour export/copy ultérieurs */
+        #conversationArea:not(.transcripteur-mode):not(.viewing-history) .transcript-header,
+        #conversationArea:not(.transcripteur-mode):not(.viewing-history) #transcript {
+            display: none !important;
+        }
+        .transcript-export-btn { display: none !important; }
+

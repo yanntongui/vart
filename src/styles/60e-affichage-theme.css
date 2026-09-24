@@ -1,0 +1,136 @@
+        /* Stage qui contient .config-panels ET .modal-page-picker.
+           Occupe la case (row 1, col 2) de la grille et clippe l'overflow
+           interne — indispensable pour que le slide-out de .config-panels
+           vers `-100%` ne déborde pas visuellement dans la nav de gauche. */
+        .config-panels-stage {
+            grid-column: 2;
+            grid-row: 1;
+            position: relative;
+            overflow: hidden;
+            min-width: 0;
+            min-height: 0;
+        }
+        .config-panels {
+            position: absolute;
+            inset: 0;
+            padding: 20px 24px;
+            overflow-y: auto;
+            transform: translateX(0);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .modal.picker-open .config-panels {
+            transform: translateX(-100%);
+        }
+
+        .config-panel {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .config-panel.active {
+            display: flex;
+        }
+
+        .config-panel .hint {
+            font-size: 0.73rem;
+            color: var(--text-muted);
+            margin-top: 0;
+        }
+
+        /* Onglet Affichage : cartes de thème + disposition. */
+        .display-section-title {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin: 6px 0 2px;
+        }
+        .display-section-title:not(:first-child) { margin-top: 20px; }
+        .display-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .display-card {
+            position: relative;
+            flex: 1 1 130px;
+            min-width: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 10px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font: inherit;
+            transition: border-color 0.15s, background 0.15s, color 0.15s;
+        }
+        .display-card:hover { border-color: var(--text-muted); color: var(--text-primary); }
+        .display-card.is-active {
+            border-color: var(--accent);
+            background: var(--bg-active);
+            color: var(--text-primary);
+        }
+        .display-card-preview {
+            width: 100%;
+            height: 54px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+        }
+        .display-card-preview svg { width: 42px; height: auto; }
+
+        /* Aperçu de thème : mini-maquette (titre « Vart » + deux barres de
+           texte) colorée selon le thème, pour montrer concrètement la
+           différence clair / sombre — contraste de LUMINANCE, pas de teinte. */
+        .theme-preview {
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 6px;
+            height: 64px;
+            padding: 11px 13px;
+            overflow: hidden;
+        }
+        .theme-preview .tp-head {
+            font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            line-height: 1;
+        }
+        .theme-preview .tp-bar { height: 6px; border-radius: 3px; width: 100%; }
+        .theme-preview .tp-bar-short { width: 60%; }
+
+        .theme-preview-dark  { background: #14142a; border-color: #2a2a40; }
+        .theme-preview-dark .tp-head { color: #eef0f7; }
+        .theme-preview-dark .tp-bar { background: #363b52; }
+        .theme-preview-dark .tp-bar-short { background: #5b8def; }
+
+        .theme-preview-light { background: #f4f5f8; border-color: #d7dae1; }
+        .theme-preview-light .tp-head { color: #1c2230; }
+        .theme-preview-light .tp-bar { background: #ccd1db; }
+        .theme-preview-light .tp-bar-short { background: #3b82f6; }
+
+        .display-card-label { font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+        .display-card-label .icon { font-size: 0.95em; opacity: 0.85; }
+        .display-card-check {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 18px;
+            height: 18px;
+            color: var(--accent);
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+        .display-card.is-active .display-card-check { opacity: 1; }
+

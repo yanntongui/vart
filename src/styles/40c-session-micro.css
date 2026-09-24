@@ -1,0 +1,153 @@
+        /* Barre d'état / session info */
+        #sessionBar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            width: 100%;
+            max-width: 800px;
+            padding: 8px 16px;
+            border-radius: 10px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            transition: background 0.3s;
+        }
+
+        #sessionBar .session-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        #sessionBar .session-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        #sessionBar .session-dot.live {
+            background: var(--success);
+            box-shadow: 0 0 6px var(--success);
+            animation: dotPulse 1.5s infinite;
+        }
+
+        @keyframes dotPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        #status {
+            font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+            font-size: 0.62rem;
+            font-weight: 400;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            text-align: center;
+            min-height: 1em;
+            opacity: 0.7;
+            margin-top: 4px;
+            display: none; /* caché par défaut — les info "Prêt / IA parle" ne s'affichent plus en bas */
+        }
+        #status.error { display: block; color: var(--danger); opacity: 1; }
+
+        #sessionBar { margin: 0 auto; }
+
+        /* Cache le bouton mute du header — remplacé par le bouton en bas */
+        #personaHeader > #controls > #muteBtn { display: none !important; }
+
+        /* Conteneur des deux boutons (Démarrer + Mute) côte à côte */
+        .bottom-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        /* Bouton "Couper le micro" — même style glass-panel que le bouton principal,
+           toujours dans le layout (visibility) pour éviter tout saut de hauteur. */
+        #bottomMuteBtn {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px 22px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.72rem;
+            font-weight: 500;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: transform 0.25s, background 0.25s, border-color 0.25s, color 0.25s;
+        }
+        #bottomMuteBtn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: scale(1.04);
+        }
+        #bottomMuteBtn:active { transform: scale(0.96); }
+        #bottomMuteBtn.muted {
+            background: rgba(239, 83, 80, 0.12);
+            border-color: rgba(239, 83, 80, 0.4);
+            color: var(--danger);
+        }
+        #bottomMuteBtn.muted:hover {
+            background: rgba(239, 83, 80, 0.18);
+            border-color: rgba(239, 83, 80, 0.55);
+        }
+        #bottomMuteBtn.visible { display: inline-flex; }
+        #bottomMuteBtn .icon { display: inline-flex; width: 18px; height: 18px; }
+        #bottomMuteBtn .icon svg { width: 18px; height: 18px; display: none; }
+        #bottomMuteBtn .icon svg.icon-mic-on { display: block; }
+        #bottomMuteBtn.muted .icon svg.icon-mic-on { display: none; }
+        #bottomMuteBtn.muted .icon svg.icon-mic-off { display: block; }
+        [data-theme="light"] #bottomMuteBtn {
+            background: rgba(0, 0, 0, 0.03);
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        [data-theme="light"] #bottomMuteBtn:hover { background: rgba(0, 0, 0, 0.06); }
+        /* La règle du thème clair ci-dessus a la même spécificité que
+           #bottomMuteBtn.muted et venait après : l'état « micro coupé »
+           perdait son fond et sa bordure en thème clair. */
+        [data-theme="light"] #bottomMuteBtn.muted {
+            background: rgba(239, 83, 80, 0.12);
+            border-color: rgba(239, 83, 80, 0.45);
+        }
+        [data-theme="light"] #bottomMuteBtn.muted:hover {
+            background: rgba(239, 83, 80, 0.18);
+            border-color: rgba(239, 83, 80, 0.6);
+        }
+
+        #visionBtn {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px 22px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.72rem;
+            font-weight: 500;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: transform 0.25s, background 0.25s, border-color 0.25s, color 0.25s;
+        }
+        #visionBtn.visible { display: inline-flex; }
+        #visionBtn:hover { background: rgba(255, 255, 255, 0.08); transform: scale(1.04); }
+        #visionBtn:active { transform: scale(0.96); }

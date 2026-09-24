@@ -1,0 +1,269 @@
+        /* Ancrage commun pour les layouts non-classiques : on positionne le
+           transcript en absolu par rapport au corps de la conversation. */
+        #conversationArea.layout-compact #conversationBody,
+        #conversationArea.layout-bubbles #conversationBody {
+            position: relative;
+        }
+        /* Les textes "live" overlay (sur l'orb + amber) sont remplacés par
+           #transcript qui gère déjà les messages en streaming, bulle par bulle
+           façon WhatsApp. */
+        #conversationArea.layout-compact #aiLiveText,
+        #conversationArea.layout-compact #userLiveText,
+        #conversationArea.layout-bubbles #aiLiveText,
+        #conversationArea.layout-bubbles #userLiveText {
+            display: none !important;
+        }
+        /* Vue simple (classique) : on masque la transcription live des paroles
+           de l'utilisateur (sous la ligne d'onde) pour un affichage épuré —
+           seul le texte de l'IA reste. Exclut Traducteur (parole source
+           affichée) et Transcripteur (dont c'est la fonction même). */
+        body:not(.traducteur-active) #conversationArea.layout-classic:not(.transcripteur-mode):not(.viewing-history) #userLiveText {
+            display: none !important;
+        }
+        /* L'en-tête du transcript (toggle ▾) est masqué : l'utilisateur ne doit
+           pas pouvoir fermer le cadre. */
+        #conversationArea.layout-compact:not(.viewing-history) .transcript-header,
+        #conversationArea.layout-bubbles:not(.viewing-history) .transcript-header {
+            display: none !important;
+        }
+
+        /* COMPACT ("Transcription simple")
+           Composition entièrement DANS LE FLOW (via `order`) pour un rythme
+           vertical robuste, identique quelle que soit la hauteur d'écran et
+           le nombre de lignes de description :
+             header → orb → ligne d'onde → transcription → boutons.
+           La ligne d'onde (trait au centre du canvas) est calée ~24 px sous
+           l'orb, soit le MÊME écart qu'entre le nom du modèle et l'orb. La
+           transcription remplit ensuite l'espace restant jusqu'aux boutons. */
+        #conversationArea.layout-compact #aiOrbWrap       { order: 1; }
+        #conversationArea.layout-compact #userWaveWrap    { order: 2; }
+        #conversationArea.layout-compact #transcript      { order: 3; }
+        #conversationArea.layout-compact .bottom-controls { order: 4; }
+        #conversationArea.layout-compact #status          { order: 5; }
+
+        /* Orb collé en haut : base 450 px (comme les autres vues) mais peut
+           RÉTRÉCIR (flex-shrink) sur écran court pour ne jamais pousser les
+           boutons hors de l'écran — comme la vue classique. Le canvas suit via
+           max-height: 100%. La symétrie orb/ligne d'onde tient quelle que soit
+           la taille (tout reste centré). */
+        #conversationArea.layout-compact #aiOrbWrap {
+            flex: 0 1 450px !important;
+            min-height: 220px !important;
+            height: auto;
+        }
+        @media (max-width: 600px) {
+            #conversationArea.layout-compact #aiOrbWrap {
+                flex: 0 1 240px !important;
+                min-height: 180px !important;
+            }
+        }
+        /* Ligne d'onde JUSTE sous l'orb, DANS le flow. Le trait visible est au
+           centre du canvas (55 px du haut) ; on remonte le wrap de 43 px
+           (= 12 px de `gap` flex + 31) pour que ce centre tombe ~24 px sous
+           l'orb — même écart qu'au-dessus. Le haut (transparent) du canvas
+           chevauche le bas de l'orb sans gêne visuelle.
+           left/right négatifs : bord à bord (compense le padding 24 px). */
+        #conversationArea.layout-compact #userWaveWrap {
+            position: relative;
+            top: auto;
+            height: 110px;
+            margin: -43px -24px 0;
+            flex: 0 0 auto;
+            z-index: 3;
+        }
+        @media (max-width: 600px) {
+            #conversationArea.layout-compact #userWaveWrap {
+                margin: -43px -12px 0;
+            }
+        }
+        /* Les boutons se calent en bas naturellement (le transcript flex:1
+           absorbe l'espace) : pas de margin-top auto nécessaire. */
+        #conversationArea.layout-compact .bottom-controls { margin-top: 0; }
+        /* Transcription DANS le flow, sous la ligne d'onde : prend uniquement
+           l'espace RESTANT après l'orb (flex-basis: 0) et scrolle en interne.
+           Point clé : basis 0 (pas `auto`) → la hauteur de la boîte ne dépend
+           PAS du nombre de messages, donc une longue transcription ne pousse
+           jamais l'orb ni ne le rétrécit. `min-height` la garde visible sur
+           écran court (c'est alors l'orb qui rétrécit). Messages ancrés en bas
+           (margin-top auto sur le 1er enfant), scroll vers le haut si ça déborde. */
+        #conversationArea.layout-compact:not(.viewing-history) #transcript {
+            display: flex !important;
+            flex-direction: column;
+            position: static;
+            transform: none;
+            flex: 1 1 0;
+            width: 100%;
+            max-width: 760px;
+            margin: 0 auto;
+            min-height: 120px;
+            height: auto;
+            max-height: none;
+            overflow-y: auto;
+            z-index: 4;
+            padding: 28px 18px 0;
+            gap: 6px;
+            background: transparent !important;
+            border: none !important;
+            /* padding-top ≥ hauteur du fondu (24px) : le 1er message reste sous
+               le dégradé quand on remonte tout en haut.
+               Masque dégradé en haut : les lignes qui débordent s'estompent. */
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 24px, #000 100%);
+                    mask-image: linear-gradient(to bottom, transparent 0, #000 24px, #000 100%);
+        }
+        #conversationArea.layout-compact:not(.viewing-history) #transcript > *:first-child {
+            margin-top: auto;
+        }
+        /* Ligne unique « Sender : message » — pas de bulle, fond neutre */
+        #conversationArea.layout-compact #transcript .transcript-msg {
+            display: flex;
+            flex-wrap: wrap; /* une image partagée passe à la ligne (cf. .vision-break) */
+            align-items: baseline;
+            gap: 8px;
+            align-self: stretch !important;
+            max-width: 100%;
+            padding: 2px 0 !important;
+            margin: 0;
+            background: transparent !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            text-align: left !important;
+            font-size: 0.95rem;
+            line-height: 1.45;
+        }
+        #conversationArea.layout-compact #transcript .transcript-msg .sender {
+            flex-shrink: 0;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-transform: none;
+            letter-spacing: 0;
+            margin: 0;
+            color: var(--accent);
+            opacity: 1;
+        }
+        #conversationArea.layout-compact #transcript .transcript-msg .sender::after { content: ' :'; }
+        #conversationArea.layout-compact #transcript .transcript-msg.user .sender { color: rgba(253, 230, 138, 1); }
+        [data-theme="light"] #conversationArea.layout-compact #transcript .transcript-msg.user .sender { color: var(--accent); }
+        #conversationArea.layout-compact #transcript .transcript-msg .text {
+            color: var(--text-primary);
+            flex: 1;
+            min-width: 0;
+        }
+        @media (max-width: 600px) {
+            #conversationArea.layout-compact:not(.viewing-history) #transcript {
+                max-width: calc(100% - 24px);
+            }
+        }
+        /* Fin de session : le transcript (flex:1) se réduit tout seul quand la
+           barre Copier/Exporter s'empile au-dessus du bouton — rien à forcer. */
+
+        /* BUBBLES
+           Ligne d'onde légèrement descendue (+35px), bulles décollées des
+           bords (padding 22px), fond unifié entre bulles IA et utilisateur. */
+        #conversationArea.layout-bubbles #userWaveWrap { top: 35px; }
+        @media (max-width: 600px) { #conversationArea.layout-bubbles #userWaveWrap { top: 15px; } }
+        /* L'orb reste à pleine opacité (identique aux autres vues) :
+           c'est la position des bulles latérales qui change, pas l'orb. */
+        #conversationArea.layout-bubbles:not(.viewing-history) #transcript {
+            display: flex !important;
+            flex-direction: column;
+            /* Pas de justify-content: flex-end (cf. compact) — bloque le scroll
+               quand ça déborde par le haut. À la place, margin-top: auto sur
+               le premier enfant (règle ci-dessous). */
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 220px;               /* au-dessus de la ligne d'onde (top: +35) + boutons */
+            margin: 0;
+            width: 100%;
+            max-width: none;
+            height: calc(100% - 340px);
+            padding: 14px 22px;          /* léger air sur les bords */
+            background: transparent !important;
+            border: none !important;
+            overflow-y: auto;
+            gap: 16px;
+            z-index: 4;
+            pointer-events: auto;
+        }
+        @media (max-width: 600px) {
+            #conversationArea.layout-bubbles:not(.viewing-history) #transcript {
+                bottom: 170px; padding: 12px 14px; height: calc(100% - 270px);
+            }
+        }
+        /* Bulles ancrées en bas quand ça tient, scrollables quand ça déborde. */
+        #conversationArea.layout-bubbles:not(.viewing-history) #transcript > *:first-child {
+            margin-top: auto;
+        }
+        /* Style des bulles : fond UNIFIÉ (le même pour IA et utilisateur),
+           seul l'alignement gauche/droite et le coin de queue diffèrent.
+           !important nécessaire pour écraser var(--transcript-ai/user) (qui
+           sont des rgba semi-transparents et laisseraient passer la teinte
+           de l'orb au centre de la bulle IA). */
+        #conversationArea.layout-bubbles #transcript .transcript-msg,
+        #conversationArea.layout-bubbles #transcript .transcript-msg.ai,
+        #conversationArea.layout-bubbles #transcript .transcript-msg.user {
+            max-width: 68%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: clamp(0.95rem, 1.4vw, 1.1rem);
+            line-height: 1.4;
+            box-shadow: 0 4px 14px var(--shadow);
+            background: var(--bg-secondary) !important;
+            border: 1px solid var(--border) !important;
+            color: var(--text-primary);
+            text-align: left;
+        }
+        /* L'orb (450 px, centré) ne doit pas être masqué par les bulles : dès
+           qu'il y a la place (grand écran), on borne le bord INTÉRIEUR des
+           bulles pour qu'il s'arrête ~210 px du centre — l'orb visible + son
+           halo culminent à ~172 px de rayon au volume max, ce qui laisse ~38 px
+           de marge. Les bulles étant ancrées aux bords extérieurs, limiter leur
+           largeur suffit. Sous 1000 px (petit écran), on garde des bulles larges
+           (pas la place de dégager l'orb — exception voulue). */
+        @media (min-width: 1000px) {
+            #conversationArea.layout-bubbles:not(.viewing-history) #transcript .transcript-msg,
+            #conversationArea.layout-bubbles:not(.viewing-history) #transcript .transcript-msg.ai,
+            #conversationArea.layout-bubbles:not(.viewing-history) #transcript .transcript-msg.user {
+                max-width: calc(50% - 210px);
+            }
+        }
+        /* Relecture d'historique en mode bulles : PAS d'orb à dégager → on
+           reprend le conteneur pleine largeur (comme en discussion live, au lieu
+           de la colonne centrée 780 px des autres vues d'historique) pour que les
+           bulles aillent aux bords, avec une largeur de bulle « chat » confortable
+           (sinon, la colonne étroite + le dégagement d'orb les tassaient). */
+        #conversationArea.viewing-history.layout-bubbles #transcript {
+            max-width: none;
+            gap: 16px; /* plus d'air entre bulles qu'en relecture texte (4px) */
+        }
+        #conversationArea.viewing-history.layout-bubbles #transcript .transcript-msg,
+        #conversationArea.viewing-history.layout-bubbles #transcript .transcript-msg.ai,
+        #conversationArea.viewing-history.layout-bubbles #transcript .transcript-msg.user {
+            max-width: min(72%, 620px);
+        }
+        #conversationArea.layout-bubbles #transcript .transcript-msg.ai {
+            align-self: flex-start;
+            border-bottom-left-radius: 6px;
+        }
+        #conversationArea.layout-bubbles #transcript .transcript-msg.user {
+            align-self: flex-end;
+            border-bottom-right-radius: 6px;
+        }
+        #conversationArea.layout-bubbles #transcript .transcript-msg .sender {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            opacity: 0.7;
+            margin-bottom: 3px;
+        }
+        #conversationArea.layout-bubbles #transcript .transcript-msg.ai .sender { color: var(--accent); }
+        #conversationArea.layout-bubbles #transcript .transcript-msg.user .sender { color: rgba(253, 230, 138, 1); }
+        [data-theme="light"] #conversationArea.layout-bubbles #transcript .transcript-msg.user .sender { color: var(--accent); }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+

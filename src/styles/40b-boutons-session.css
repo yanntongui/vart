@@ -1,0 +1,146 @@
+        /* Bouton principal Initialiser/Déconnecter — style glass-panel pill (réf React) */
+        .connect-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 14px 32px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: transform 0.25s, background 0.25s, border-color 0.25s, color 0.25s;
+            font-family: inherit;
+        }
+        .connect-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: scale(1.04);
+        }
+        .connect-btn:active { transform: scale(0.96); }
+        .connect-btn.connected:hover {
+            background: rgba(239, 83, 80, 0.1);
+            border-color: rgba(239, 83, 80, 0.3);
+        }
+        .connect-btn.connecting {
+            opacity: 0.65;
+            pointer-events: none;
+        }
+        .connect-btn-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+        }
+        .connect-btn-icon svg { width: 20px; height: 20px; display: none; }
+        .connect-btn .icon-mic { display: block; }
+        .connect-btn.connected .icon-mic { display: none; }
+        .connect-btn.connected .icon-stop { display: block; width: 14px; height: 14px; color: rgba(248, 113, 113, 1); }
+        .connect-btn.connecting .icon-mic,
+        .connect-btn.connecting .icon-stop { display: none; }
+        .connect-btn.connecting .icon-spin {
+            display: block;
+            animation: connectBtnSpin 0.9s linear infinite;
+        }
+        @keyframes connectBtnSpin { to { transform: rotate(360deg); } }
+        .connect-btn-label {
+            font-size: 0.72rem;
+            font-weight: 500;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+        }
+        [data-theme="light"] .connect-btn {
+            background: rgba(0, 0, 0, 0.03);
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        [data-theme="light"] .connect-btn:hover {
+            background: rgba(0, 0, 0, 0.06);
+        }
+
+        /* Canvas viz utilisateur conservé (réutilisé par le mode Transcripteur) */
+        .viz-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .viz-container canvas {
+            background: transparent;
+            width: 100%;
+            max-width: 260px;
+            aspect-ratio: 1;
+        }
+
+        #userViz {
+            display: none;
+        }
+
+        #controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 13px 36px;
+            border: none;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            /* Courbe spring : le relâchement suit la physique, pas un easing linéaire. */
+            transition: all 0.25s var(--spring);
+            letter-spacing: 0.02em;
+        }
+
+        .btn:hover { transform: scale(1.03); }
+        /* Apple §1 : le feedback vit au PRESSER (pointer-down), en 100 ms —
+           attendre le relâchement donne une interface « morte ». */
+        .btn:active { transform: scale(0.97); transition-duration: 100ms; }
+
+        .btn-start {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 2px 12px rgba(79,195,247,0.25);
+        }
+
+        .btn-stop {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            box-shadow: none;
+        }
+
+        .btn-stop:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .btn-mute {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 0;
+        }
+
+        .btn-mute:hover { background: var(--bg-hover); border-color: var(--text-muted); }
+
+        .btn-mute.muted {
+            background: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+

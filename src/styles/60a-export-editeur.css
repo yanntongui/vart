@@ -1,0 +1,150 @@
+        /* Export transcripteur : choix de format */
+        .export-format-choice {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .export-format-choice button {
+            padding: 14px 28px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .export-format-choice button:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .export-cancel-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.82rem;
+            margin-top: 18px;
+            padding: 6px 16px;
+            transition: color 0.15s;
+        }
+
+        .export-cancel-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--scrim);
+            /* Matériau Apple : flou + saturation pour que le contenu derrière
+               reste présent sans distraire (couche flottante, pas mur opaque). */
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background: var(--modal-bg);
+            border-radius: 20px;
+            padding: 2rem;
+            width: 520px;
+            max-width: 95vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px var(--shadow);
+            transition: background 0.3s;
+        }
+        /* « Materialize, don't just fade » : la surface arrive comme un objet
+           physique (échelle + élévation + opacité ensemble) sur la courbe spring.
+           Ciblée sur .active pour ne pas rejouer au simple changement de thème. */
+        .modal-overlay.active .modal {
+            animation: modalMaterialize 0.35s var(--spring);
+        }
+        @keyframes modalMaterialize {
+            from { opacity: 0; transform: translateY(10px) scale(0.96); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        /* La barre de défilement ne doit pas déborder des angles arrondis
+           (border-radius 20px) : on inset la piste (et donc le curseur) en
+           haut et en bas pour qu'elle reste dans la zone arrondie. */
+        .modal::-webkit-scrollbar-track { margin: 20px 0; }
+
+        .modal h2 {
+            font-size: 1.3rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            letter-spacing: -0.01em; /* tracking négatif : titres ≥ 1.2rem (§15) */
+        }
+
+        .modal label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.3rem;
+            margin-top: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Le tout premier label collé au h2 : le margin-collapse avec la marge
+           basse du h2 gère déjà l'espace, pas besoin de zéro explicite. On
+           NE met PAS `.modal label:first-of-type { margin-top: 0 }` global :
+           il se déclencherait sur le premier label de chaque conteneur imbriqué
+           (persona-head, groupes, colonnes couleur…) et « collerait » ces
+           labels, cassant le rythme vertical. Les exceptions voulues sont
+           scopées explicitement (ex. « Nom » aligné avec l'avatar). */
+
+        .modal input[type="password"],
+        .modal input[type="text"],
+        .modal select,
+        .modal textarea {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s, background 0.3s;
+        }
+
+        .modal input:focus, .modal select:focus, .modal textarea:focus {
+            border-color: var(--accent);
+        }
+
+        .modal textarea {
+            /* block (et non inline-block par défaut) : évite l'espace fantôme
+               (« descender ») sous la zone, qui gonflait l'écart vertical
+               jusqu'au champ suivant (20px au lieu de 16px). */
+            display: block;
+            resize: vertical;
+            min-height: 160px;
+            line-height: 1.5;
+            font-size: 0.85rem;
+        }
+
+        .modal .hint {
+            font-size: 0.73rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+        }
+

@@ -1,0 +1,176 @@
+        /* Zone centrale — plein écran, pas de scroll, l'orb prend toute la hauteur dispo */
+        #conversationBody {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: flex-start;
+            padding: 16px 24px 18px;
+            gap: 12px;
+            min-height: 0;
+        }
+
+        /*
+           Bulle (orb) au centre + ligne d'onde
+           Textes en gros superposés (pas de bulles)
+        */
+        /* Orb (bulle) du persona/IA — occupe tout l'espace dispo, fond transparent */
+        #aiOrbWrap {
+            position: relative;
+            width: 100%;
+            max-width: none;
+            flex: 1;
+            min-height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            overflow: visible;
+        }
+
+        #aiOrbCanvas {
+            position: relative;
+            z-index: 1;
+            display: block;
+            width: 450px;
+            height: 450px;
+            max-width: 100%;
+            max-height: 100%;
+            background: transparent;
+        }
+
+        /* Ligne d'onde (wavy line) – réagit au micro de l'utilisateur
+           On déborde du padding latéral de #conversationBody pour aller bord à bord. */
+        #userWaveWrap {
+            width: auto;
+            max-width: none;
+            height: 110px;
+            position: relative;
+            top: -25px; /* lifte le trait visible sans toucher la mise en page flex
+                          (donc l'orb au-dessus et le texte IA ne bougent pas) */
+            flex-shrink: 0;
+            margin-left: -24px;
+            margin-right: -24px;
+        }
+        @media (max-width: 600px) {
+            #userWaveWrap { margin-left: -12px; margin-right: -12px; top: -10px; }
+        }
+
+        #userWaveCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Texte IA — gros texte centré, superposé sur le bas de l'orb */
+        #aiLiveText {
+            position: absolute;
+            bottom: 14%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 92%;
+            max-width: 920px;
+            overflow: visible;
+            text-align: center;
+            font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+            font-size: clamp(1.5rem, 2.4vw, 2.3rem);
+            font-weight: 300;
+            line-height: 1.4;
+            color: #fff;
+            text-shadow: 0 4px 28px rgba(0,0,0,0.95), 0 0 10px rgba(0,0,0,0.7);
+            pointer-events: none;
+            z-index: 5;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        #aiLiveText.visible { opacity: 1; }
+
+        /* En mode clair : texte foncé sans ombre lourde (sinon shadow noire trop visible
+           sur fond clair). Un léger halo blanc adoucit le bord sans alourdir. */
+        [data-theme="light"] #aiLiveText {
+            color: var(--text-primary);
+            text-shadow: 0 1px 6px rgba(255, 255, 255, 0.7);
+        }
+
+        /* Animation magique char-par-char (blur → net) */
+        #aiLiveText .ai-char {
+            opacity: 0;
+            filter: blur(10px);
+            animation: aiCharFadeIn 0.25s ease forwards;
+        }
+        @keyframes aiCharFadeIn {
+            to { opacity: 1; filter: blur(0); }
+        }
+
+        /* Texte utilisateur — couleur amber identique à la ligne d'onde, centré
+           verticalement entre le trait visible de l'onde et les boutons du bas.
+           On utilise `position: relative` + `top` négatif pour le remonter sans
+           altérer la mise en page flex (sinon l'orb au-dessus grandit et le texte
+           IA descend). Cf. aussi `margin-bottom` négatif sur #userWaveWrap pour
+           remonter la ligne et libérer plus de place au texte. */
+        #userLiveText {
+            width: 100%;
+            text-align: center;
+            font-size: clamp(1.05rem, 1.7vw, 1.4rem);
+            font-weight: 400;
+            color: rgba(253, 230, 138, 1); /* amber clair en mode sombre */
+            /* Halo orange identique à celui de la ligne d'onde (shadowBlur 10
+               + rgba(245,158,11,0.55)) — donne au texte la même chaleur perçue
+               que la ligne, sinon le texte paraît plus pâle à RGB égal. */
+            text-shadow: 0 0 10px rgba(245, 158, 11, 0.55);
+            padding: 0 28px;
+            min-height: 1.6em;
+            position: relative;
+            top: -40px; /* recentre le texte entre le trait visible et les boutons */
+            opacity: 0;
+            transition: opacity 0.35s ease;
+            flex-shrink: 0;
+        }
+        #userLiveText span {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2; /* jusqu'à 2 lignes, puis ellipsis */
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        #userLiveText.visible { opacity: 1; }
+
+        /* En mode clair uniquement : bascule sur le bleu --accent (couleur
+           du bouton « + Nouvelle discussion »). En mode sombre on garde
+           l'amber clair défini ci-dessus. */
+        [data-theme="light"] #userLiveText {
+            color: var(--accent);
+        }
+
+        /* Glow central radial qui change de couleur selon l'état (déconnecté → gris,
+           connecté + silencieux → bleu, IA parle → violet). Identique au composant
+           central de la version React. */
+        #centralGlow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px;
+            height: 800px;
+            max-width: 110vw;
+            max-height: 110vh;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.2;
+            background-color: #27272a; /* zinc-800 par défaut */
+            transition: background-color 1s;
+            pointer-events: none;
+            z-index: 0;
+        }
+        #centralGlow.connected { background-color: #2563eb; } /* blue-600 */
+        #centralGlow.speaking  { background-color: #9333ea; } /* purple-600 */
+        /* Mode clair : glow plus discret, et au repos une teinte claire (pas le
+           zinc foncé) pour ne pas assombrir le fond autour de l'orb. */
+        [data-theme="light"] #centralGlow { opacity: 0.1; background-color: #c7d2fe; } /* indigo-200 */
+        [data-theme="light"] #centralGlow.connected { background-color: #60a5fa; } /* blue-400 */
+        [data-theme="light"] #centralGlow.speaking  { background-color: #c084fc; } /* purple-400 */
+

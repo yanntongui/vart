@@ -1,0 +1,195 @@
+        /* La page push ne recouvre QUE le panneau droit (.config-panels) :
+           on la place en 3ème cellule de la grille .config-layout, dans la
+           colonne 2, même ligne que .config-panels → elle empile dessus.
+           `.config-layout { overflow: hidden }` (déjà présent) clippe le
+           slide-in venant de la droite. */
+        .modal-page-picker {
+            position: absolute;
+            inset: 0;
+            background: var(--modal-bg);
+            transform: translateX(100%);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                        visibility 0s linear 0.35s;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 24px;
+            visibility: hidden;
+        }
+        .modal.picker-open .modal-page-picker {
+            transform: translateX(0);
+            visibility: visible;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modal-page-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 20px;
+            flex-shrink: 0;
+        }
+        .modal-page-back {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            padding: 8px 12px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            transition: color 0.15s, border-color 0.15s, background 0.15s;
+        }
+        .modal-page-back:hover {
+            color: var(--accent);
+            border-color: var(--accent);
+            background: var(--bg-hover);
+        }
+        .modal-page-title {
+            margin: 0;
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .modal-page-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding-right: 4px;
+        }
+        /* Les options dans la page push réutilisent les mêmes styles que
+           l'ancien dropdown (.model-picker-option) pour rester cohérentes. */
+
+        .model-picker-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            max-height: 320px;
+            overflow-y: auto;
+            background: var(--modal-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 10px 32px var(--shadow);
+            z-index: 10;
+            padding: 4px;
+        }
+        .model-picker.open .model-picker-menu { display: block; }
+        /* Flip-up : quand le menu déborderait vers le bas (bas du modal /
+           viewport), on l'ouvre AU-DESSUS du trigger. La classe est ajoutée
+           dynamiquement par le click handler qui mesure l'espace disponible. */
+        .model-picker.flip-up .model-picker-menu {
+            top: auto;
+            bottom: calc(100% + 6px);
+        }
+
+        .model-picker-group {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-muted);
+            padding: 10px 12px 4px;
+        }
+        .model-picker-option {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            padding: 10px 12px;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: background 0.12s;
+        }
+        .model-picker-option:hover { background: var(--bg-hover); }
+        .model-picker-option.selected {
+            background: var(--bg-active);
+            color: var(--accent);
+        }
+        .model-picker-option.disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+        .model-picker-option.disabled:hover { background: transparent; }
+        .model-picker-option-name {
+            font-size: 0.92rem;
+            font-weight: 500;
+            line-height: 1.2;
+        }
+        /* Nouveautés + Grok : nom en gras pour ressortir dans la liste. */
+        .model-picker-option.is-featured .model-picker-option-name { font-weight: 700; }
+        .model-picker-option-cost {
+            font-size: 0.74rem;
+            color: var(--text-secondary);
+            line-height: 1.2;
+        }
+        .model-picker-option.selected .model-picker-option-cost { color: var(--accent); opacity: 0.85; }
+
+        .api-key-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            padding: 4px 10px;
+            border-radius: 8px;
+            margin-top: 4px;
+        }
+
+        .api-key-status.valid {
+            color: var(--success);
+            background: rgba(102, 187, 106, 0.1);
+        }
+
+        .api-key-status.invalid {
+            color: var(--danger);
+            background: rgba(239, 83, 80, 0.1);
+        }
+
+        .api-key-status.checking {
+            color: var(--text-secondary);
+            background: var(--bg-hover);
+        }
+
+        .budget-bar {
+            height: 6px;
+            border-radius: 3px;
+            background: var(--bg-input);
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .budget-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+
+        .persona-item[draggable="true"] {
+            cursor: grab;
+        }
+
+        .persona-item.dragging {
+            opacity: 0.4;
+        }
+
+        .persona-item.drag-over {
+            border-top: 2px solid var(--accent);
+        }
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            margin-top: 10px;
+        }
+        .stats-table th, .stats-table td {
+            padding: 10px 12px;
+            text-align: right;
+            border-bottom: 1px solid var(--border);
+        }
+        .stats-table th:first-child, .stats-table td:first-child {
+            text-align: left;
+        }

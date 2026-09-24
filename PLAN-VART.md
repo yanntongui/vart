@@ -306,12 +306,51 @@ La découpe a été validée **par preuve, pas par confiance** :
 - dialogue limité à `customAlert`/`customConfirm` ;
 - `90-surcharge-apple.css` doit rester le dernier CSS.
 
-### Étape suivante naturelle
+### Découpage de 2e niveau *(livré le 24/09/2026)*
 
-Les plus gros modules sont maintenant candidats à un second découpage :
-`60-editeurs-config.css` (2 192 l.), `40-orb-transcript.css` (982 l.),
-`50-modes-lecture.css` (706 l.), `44-vision.js` (687 l.),
-`38-sessions-openai.js` (646 l.). À faire **module par module**, en reprouvant
-l'identité après chaque étape.
+Les cinq plus gros modules ont été scindés à leur tour, avec un nouvel outil :
+`scripts/resplit.js`. Sa particularité est son **filet de sécurité** : il découpe,
+met à jour le manifeste, puis exige que `vart.html` reste identique à la
+référence. Sinon il **annule tout** (fichiers et manifeste) et sort en erreur —
+un découpage ne peut donc pas casser l'application.
+
+| Module d'origine | Lignes | Découpé en | Plus gros morceau |
+|---|---|---|---|
+| `60-editeurs-config.css` | 2 192 | 11 fichiers `60a`-`60k` | 424 l. |
+| `40-orb-transcript.css` | 982 | 5 fichiers `40a`-`40e` | 393 l. |
+| `50-modes-lecture.css` | 706 | 4 fichiers `50a`-`50d` | 255 l. |
+| `44-vision.js` | 687 | `44a` capture / `44b` stockage / `44c` UI | 250 l. |
+| `38-sessions-openai.js` | 646 | `38a` Realtime / `38b` GPT Live / `38c` xAI | 343 l. |
+
+**Convention de nommage** : un module découpé garde son numéro et reçoit un
+suffixe alphabétique (`44a`, `44b`, `44c`), pour ne pas avoir à renuméroter
+tous les modules suivants.
+
+**Bilan** : 59 → **80 modules** ; le plus gros passe de **2 192 à 623 lignes**.
+Les plages du manifeste couvrent toujours exactement les totaux d'origine
+(5 569 lignes de CSS, 11 168 lignes de JS) et `vart.html` reste identique
+octet pour octet.
+
+### Deux incidents réels, et ce qu'ils ont appris
+
+1. **Crash sur la borne de fin.** La boucle de contrôle des points de coupe
+   traitait la dernière borne (la fin exclusive) comme un début de partie →
+   `lines[total]` vaut `undefined` → `TypeError`. Découvert par un **test
+   d'échec volontaire** (référence volontairement corrompue pour vérifier le
+   rollback), jamais par le chemin nominal. Leçon : tester le chemin d'échec,
+   pas seulement le chemin heureux.
+2. **Course sur le manifeste.** Lancer deux `resplit` **en parallèle** : chacun
+   lit `src/manifest.json`, le modifie en mémoire, puis l'écrit — le dernier
+   écrase les entrées du premier. Résultat : manifeste incohérent avec les
+   fichiers sur disque. Réparé par un retour à l'état commité, puis prévenu par
+   un **verrou** (`.resplit.lock`) et documenté dans `CLAUDE.md`. Leçon : ces
+   scripts ne sont pas réentrants, ils se lancent **en séquence**.
+
+### Suite
+
+Plus gros modules restants : `22-ui-config-pickers.js` (623 l.),
+`46-conversation-controle.js` (580 l.), `36-ui-modes.js` (524 l.). Le même
+outil s'applique, sans risque, module par module.
+
 
 

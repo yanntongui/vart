@@ -1,0 +1,185 @@
+        /* Insights checkboxes */
+        .insight-item {
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: var(--bg-input);
+            margin-bottom: 6px;
+            transition: background 0.15s;
+        }
+        .insight-item:hover { background: var(--bg-hover); }
+        .insight-item-top {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            cursor: pointer;
+        }
+        .insight-item input[type="checkbox"] {
+            margin-top: 2px;
+            accent-color: var(--accent);
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+        .insight-item label {
+            margin: 0;
+            text-transform: none;
+            font-size: 0.88rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            line-height: 1.4;
+            flex: 1;
+        }
+        .insight-dest-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 7px;
+            margin-left: 26px;
+        }
+        .insight-dest-btn {
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .insight-dest-btn.active {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--bg-active);
+        }
+        .insight-dest-btn:hover:not(.active) {
+            color: var(--text-secondary);
+            border-color: var(--text-muted);
+        }
+
+        .api-key-required {
+            background: rgba(239, 83, 80, 0.1);
+            border: 1px solid var(--danger);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            font-size: 0.85rem;
+            color: var(--danger);
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .api-guide {
+            background: var(--bg-hover);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin: 10px 0;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .api-guide ol {
+            margin: 6px 0 8px 18px;
+            padding: 0;
+        }
+
+        .api-guide li {
+            margin-bottom: 3px;
+        }
+
+        .api-guide a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .api-guide a:hover {
+            text-decoration: underline;
+        }
+
+        .api-guide code {
+            background: var(--bg-input);
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .api-guide p {
+            margin: 4px 0;
+        }
+
+        #apiKeyModal > .modal {
+            width: 640px;
+            height: 620px;        /* taille fixe : la popup ne change plus selon l'onglet */
+            max-height: 90vh;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #apiKeyModal > .modal > h2 {
+            padding: 1.5rem 1.5rem 0;
+            margin-bottom: 0.8rem;
+        }
+
+        #apiKeyModal > .modal > .api-key-required {
+            margin: 0 1.5rem 0.8rem;
+        }
+
+        #apiKeyModal > .modal > .btn-save {
+            margin: 1rem 1.5rem 1.5rem;
+            width: auto;
+        }
+
+        .config-layout {
+            display: grid;
+            grid-template-columns: 170px 1fr;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            flex: 1;
+            min-height: 0;        /* permet aux panneaux de scroller dans la hauteur fixée */
+            overflow: hidden;
+        }
+
+        .config-nav {
+            background: var(--bg-input);
+            padding: 12px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            border-right: 1px solid var(--border);
+            overflow-y: auto;   /* évite que les onglets du bas soient coupés
+                                   quand le modal est écrasé sur un petit écran. */
+            min-height: 0;
+        }
+
+        .config-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 18px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border: none;
+            background: none;
+            text-align: left;
+            border-radius: 0;
+            transition: all 0.15s;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+
+        .config-nav-item:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .config-nav-item.active {
+            background: var(--bg-active);
+            color: var(--accent);
+            font-weight: 600;
+            border-right: 3px solid var(--accent);
+        }
+

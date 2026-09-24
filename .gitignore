@@ -9,6 +9,10 @@ node_modules/
 # versionner un doublon de 911 Ko. scripts/split.js le régénère au besoin.
 _baseline/
 
+# Verrou de scripts/resplit.js (empêche deux découpages simultanés de se
+# marcher dessus sur src/manifest.json)
+.resplit.lock
+
 # Ancêtre Kast v2.1 : porte encore l'ancien branding (« Renaud Dékode ») et le
 # lien vers la bibliothèque communautaire supprimée. Conserve-le en local,
 # mais ne le publie pas : ce serait ré-exposer ce que le rebranding VYT a retiré.

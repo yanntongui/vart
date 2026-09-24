@@ -1,0 +1,393 @@
+        /* Partage en cours : l'état ne repose PAS sur la teinte. Fond
+           nettement plus clair, bordure pleine, graisse renforcée, libellé
+           qui change (« Caméra active » / « Écran partagé ») et icône œil
+           ouvert au lieu d'œil barré. */
+        #visionBtn.active {
+            background: rgba(255, 255, 255, 0.16);
+            border-color: rgba(255, 255, 255, 0.55);
+            font-weight: 700;
+        }
+        #visionBtn .icon { display: inline-flex; width: 18px; height: 18px; }
+        #visionBtn .icon svg { width: 18px; height: 18px; display: block; }
+        /* Vision impossible avec ce modèle : le bouton reste en place, grisé,
+           et explique pourquoi au survol (data-tip). Pas d'attribut disabled,
+           sinon le navigateur avalerait l'événement de survol. */
+        #visionBtn.is-unavailable {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        #visionBtn.is-unavailable:hover {
+            background: rgba(255, 255, 255, 0.03);
+            transform: none;
+        }
+        [data-theme="light"] #visionBtn.is-unavailable:hover { background: rgba(0, 0, 0, 0.03); }
+        [data-theme="light"] #visionBtn {
+            background: rgba(0, 0, 0, 0.03);
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        [data-theme="light"] #visionBtn:hover { background: rgba(0, 0, 0, 0.06); }
+        [data-theme="light"] #visionBtn.active {
+            background: rgba(0, 0, 0, 0.12);
+            border-color: rgba(0, 0, 0, 0.5);
+        }
+        .viewing-history #visionBtn { display: none !important; }
+
+        /* Menu des sources : deux bulles EMPILÉES dans la même colonne —
+           bulle 1 = les sources, bulle 2 = le surcoût (seulement si le
+           modèle facture les images). Même largeur, 8 px entre les deux. */
+        .vision-menu {
+            position: fixed;
+            z-index: 260;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 296px;
+        }
+        .vision-bubble {
+            padding: 8px;
+            background: var(--modal-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            box-shadow: 0 12px 32px var(--shadow);
+        }
+        .vision-bubble-title {
+            padding: 6px 10px 8px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+        .vision-src {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px 12px;
+            border: none;
+            border-radius: 10px;
+            background: none;
+            color: var(--text-primary);
+            font: inherit;
+            font-size: 0.95rem;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+        .vision-src:hover { background: var(--bg-hover); }
+        .vision-src.is-active { background: var(--bg-active); font-weight: 700; }
+        .vision-src .icon { display: inline-flex; width: 18px; height: 18px; flex: 0 0 auto; color: var(--text-secondary); }
+        .vision-src .icon svg { width: 18px; height: 18px; }
+        .vision-src.is-active .icon { color: var(--text-primary); }
+        .vision-src-text { min-width: 0; }
+        .vision-src-sub {
+            display: block;
+            margin-top: 2px;
+            font-size: 0.75rem;
+            font-weight: 400;
+            color: var(--text-secondary);
+            line-height: 1.35;
+        }
+        /* « Arrêter le partage » : ligne PLEINE, détachée des trois sources
+           par un fond franc et une bordure — repérable au contraste, pas
+           seulement à la teinte. Même recette que le bouton micro coupé. */
+        .vision-src.is-stop {
+            margin-top: 6px;
+            background: rgba(239, 83, 80, 0.14);
+            border: 1px solid rgba(239, 83, 80, 0.4);
+            color: var(--danger);
+            font-weight: 600;
+        }
+        .vision-src.is-stop:hover {
+            background: rgba(239, 83, 80, 0.22);
+            border-color: rgba(239, 83, 80, 0.6);
+        }
+        .vision-src.is-stop .icon { color: var(--danger); }
+
+        /* Bulle 2 : surcoût de la vision, sous la bulle des sources. */
+        .vision-cost { padding: 11px 13px; }
+        .vision-cost-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+        .vision-cost-label .vision-badge-icon { width: 13px; height: 13px; }
+        .vision-cost-label .vision-badge-icon svg { width: 13px; height: 13px; }
+        .vision-cost-value {
+            margin-top: 3px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .vision-cost-note {
+            margin-top: 4px;
+            font-size: 0.75rem;
+            line-height: 1.45;
+            color: var(--text-secondary);
+        }
+
+        /* Vignette « ce que le modèle voit » : petite fenêtre fixe en bas à
+           droite, avec le point d'enregistrement et le bouton de coupure. */
+        .vision-preview {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            /* Sous le tiroir mobile (150-161) et sous les fenêtres modales
+               (200+) : la vignette ne doit pas recouvrir les réglages. */
+            z-index: 140;
+            width: 208px;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: #000;
+            box-shadow: 0 12px 32px var(--shadow);
+        }
+        .vision-preview video { display: block; width: 100%; height: auto; }
+        .vision-preview-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            background: var(--modal-bg);
+        }
+        .vision-preview-bar .label {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+        }
+        .vision-dot {
+            width: 8px;
+            height: 8px;
+            flex: 0 0 auto;
+            border-radius: 50%;
+            background: var(--danger);
+            animation: visionPulse 1.6s ease-in-out infinite;
+        }
+        @keyframes visionPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+        .vision-preview-btn {
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 9px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font: inherit;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .vision-preview-btn:hover { background: var(--bg-hover); border-color: var(--accent); }
+        .vision-preview-btn svg { width: 13px; height: 13px; }
+        @media (max-width: 640px) {
+            .vision-preview { width: 148px; right: 12px; bottom: 12px; }
+        }
+
+        /* Viseur centré des modèles OpenAI : l'envoi est ponctuel, donc on
+           donne de la place à l'image et un bouton de capture franc, au lieu
+           de la vignette discrète du flux Gemini. */
+        .vision-capture {
+            position: fixed;
+            inset: 0;
+            z-index: 250;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+        }
+        .vision-capture-card {
+            width: min(560px, 100%);
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            padding: 20px;
+            border-radius: 18px;
+            background: var(--modal-bg);
+            border: 1px solid var(--border);
+            box-shadow: 0 24px 60px var(--shadow);
+            text-align: center;
+        }
+        .vision-capture-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .vision-capture-hint {
+            margin-top: 6px;
+            font-size: 0.82rem;
+            line-height: 1.45;
+            color: var(--text-secondary);
+        }
+        .vision-capture-stage {
+            margin-top: 16px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+            border: 1px solid var(--border);
+        }
+        .vision-capture-stage video {
+            display: block;
+            width: 100%;
+            max-height: 52vh;
+            object-fit: contain;
+            background: #000;
+        }
+        .vision-capture-actions {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        .vision-capture-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 30px;
+            border: none;
+            border-radius: 999px;
+            background: var(--accent);
+            /* L'accent est CLAIR en thème sombre : du blanc dessus tombe vers
+               1,8:1. Texte très foncé ici, blanc sur un bleu plus profond en
+               thème clair — les deux passent le AA largement. */
+            color: #062a3d;
+            font: inherit;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.15s, filter 0.15s;
+        }
+        [data-theme="light"] .vision-capture-btn {
+            background: #1565c0;
+            color: #fff;
+        }
+        .vision-capture-btn:hover { filter: brightness(1.08); transform: scale(1.03); }
+        .vision-capture-btn:active { transform: scale(0.97); }
+        .vision-capture-btn:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 3px; }
+        .vision-capture-btn-icon,
+        .vision-capture-btn-check { display: inline-flex; width: 20px; height: 20px; }
+        .vision-capture-btn-icon svg,
+        .vision-capture-btn-check svg { width: 20px; height: 20px; }
+        /* Confirmation d'envoi : l'icône passe de l'obturateur à la coche et
+           le libellé change — deux signaux, aucun qui repose sur la couleur. */
+        .vision-capture-btn-check { display: none; }
+        .vision-capture-btn.is-sent .vision-capture-btn-icon { display: none; }
+        .vision-capture-btn.is-sent .vision-capture-btn-check { display: inline-flex; }
+        .vision-capture-done {
+            padding: 13px 22px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .vision-capture-done:hover { background: var(--bg-hover); border-color: var(--text-secondary); }
+
+        /* Saut de ligne avant la vignette. Inutile quand le message est un bloc ;
+           en mise en page compacte (message en flex horizontal), il force
+           l'image sous le texte au lieu de la coller à sa droite. */
+        .transcript-msg .vision-break { display: none; }
+        #conversationArea.layout-compact #transcript .transcript-msg .vision-break {
+            display: block;
+            flex-basis: 100%;
+            height: 0;
+        }
+
+        /* Image partagée dans le transcript : vignette sous le texte, cliquable
+           pour l'agrandir (curseur loupe + anneau de focus au clavier). */
+        .transcript-msg .vision-thumb {
+            display: block;
+            margin-top: 6px;
+            width: 100%;
+            max-width: 220px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            cursor: zoom-in;
+            transition: border-color 0.15s, transform 0.15s;
+        }
+        .transcript-msg .vision-thumb:hover { border-color: var(--accent); transform: scale(1.01); }
+        .transcript-msg .vision-thumb:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        /* Visionneuse : l'image envoyée, en grand, sur fond assombri. */
+        .image-lightbox {
+            position: fixed;
+            inset: 0;
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            padding: 32px;
+            background: rgba(0, 0, 0, 0.82);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            cursor: zoom-out;
+        }
+        .image-lightbox img {
+            max-width: 100%;
+            min-height: 0;
+            max-height: calc(100vh - 128px);
+            object-fit: contain;
+            border-radius: 12px;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+            cursor: default;
+        }
+        .image-lightbox-caption {
+            max-width: 100%;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.85rem;
+            text-align: center;
+            overflow-wrap: anywhere;
+        }
+        .image-lightbox-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .image-lightbox-close:hover {
+            background: rgba(255, 255, 255, 0.22);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+        .image-lightbox-close:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+        .image-lightbox-close svg { width: 18px; height: 18px; }
+        @media (max-width: 640px) {
+            .image-lightbox { padding: 16px; }
+            .image-lightbox img { max-height: calc(100vh - 104px); }
+        }
+

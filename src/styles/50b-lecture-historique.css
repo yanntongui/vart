@@ -1,0 +1,255 @@
+        /* LECTURE D'UNE DISCUSSION TERMINÉE
+           Layout épuré, cohérent avec le reste : plus de cadre encadré,
+           typographie confortable, date visible sous le nom, boutons
+           Copier/Exporter accessibles en haut à droite. */
+
+        /* Afficher la date sous le nom (personaHeaderDesc contient la date
+           formatée en viewing-history — cf. viewConversation()). */
+        .viewing-history #personaHeaderDesc {
+            display: block !important;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+            letter-spacing: 0.02em;
+        }
+
+        /* En mode Traducteur, personaHeaderDesc héberge le bouton pilule
+           « Vers l'anglais 🇬🇧 ▾ » qui ouvre le sélecteur de langue.
+           On le force visible malgré la règle globale `display: none`. */
+        body.traducteur-active #personaHeaderDesc,
+        body.transcripteur-active #personaHeaderDesc {
+            display: block !important;
+            margin-top: 2px;
+        }
+
+        /* Info-bulle de coût (chips / onglets moteur du Traducteur et du
+           Transcripteur). Affichage instantané, fond inversé pour un fort
+           contraste de luminance dans les deux thèmes. */
+        .vart-tip {
+            position: fixed;
+            z-index: 1000;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 8px 14px;
+            border-radius: 9px;
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            box-shadow: 0 8px 24px var(--shadow);
+            white-space: nowrap;
+            line-height: 1.3;
+        }
+        .vart-tip::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: -6px;
+            width: 12px;
+            height: 12px;
+            transform: translateX(-50%) rotate(45deg);
+            background: var(--text-primary);
+            border-radius: 2px;
+        }
+        .vart-tip.below::after { bottom: auto; top: -6px; }
+        .vart-tip-model {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.04em;
+            opacity: 0.72;
+        }
+        .vart-tip-price { font-size: 0.95rem; font-weight: 700; }
+
+        /* En mode Traducteur, on empile avatar au-dessus du nom pour que
+           l'ensemble soit parfaitement centré horizontalement (sinon la
+           largeur de l'avatar décale le titre à droite du milieu). */
+        body.traducteur-active #personaHeader,
+        body.transcripteur-active #personaHeader {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Rendre visibles les boutons Copier/Exporter en viewing-history
+           uniquement (masqués partout ailleurs par la règle globale
+           `.transcript-export-btn { display: none !important; }`).
+           Style pilule verre assorti au bouton principal, comme en fin de
+           session — cohérent dans toute l'app. */
+        .viewing-history .transcript-export-btn {
+            display: inline-flex !important;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.03);
+            -webkit-backdrop-filter: blur(24px);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            font-size: 0.62rem;
+            font-weight: 500;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+        .viewing-history .transcript-export-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+        }
+        [data-theme="light"] .viewing-history .transcript-export-btn {
+            background: rgba(0, 0, 0, 0.03);
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        [data-theme="light"] .viewing-history .transcript-export-btn:hover {
+            background: rgba(0, 0, 0, 0.06);
+        }
+
+        /* Bouton « Démarrer une nouvelle conversation » tout en bas de la
+           relecture, avec sa note discrète. Masqué partout ailleurs. */
+        #historyNewConv { display: none; }
+        .viewing-history #historyNewConv {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            order: 99;
+            flex-shrink: 0;
+            max-width: 780px;
+            width: 100%;
+            margin: 4px auto 0;
+            padding: 12px 24px 12px;
+            text-align: center;
+        }
+        .history-new-conv-hint {
+            margin: 0;
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            letter-spacing: 0.01em;
+        }
+
+        /* Transcript en lecture : conteneur épuré, largeur confortable
+           pour la lecture, plus de bordure ni fond secondaire. */
+        .viewing-history #transcript {
+            display: flex !important;
+            opacity: 1 !important;
+            background: transparent !important;
+            border: none !important;
+            border-radius: 0 !important;
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 28px 24px 24px;
+            gap: 4px;
+            /* padding-top ≥ hauteur du fondu (24px) : le 1er message reste sous
+               le dégradé et n'est pas estompé quand on est tout en haut.
+               Masque dégradé haut/bas pour un fondu doux quand ça scrolle. */
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+                    mask-image: linear-gradient(to bottom, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+        }
+
+        /* Header du transcript (boutons export) : centré et aéré, au-dessus
+           du texte, dans la même largeur que le contenu. */
+        .viewing-history .transcript-header {
+            display: flex !important;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            max-width: 780px;
+            margin: 0 auto 10px;
+            padding: 6px 24px 0;
+        }
+        /* Le div-espaceur (flex:1) du header pousserait les boutons à droite :
+           on le neutralise pour un vrai centrage. */
+        .viewing-history .transcript-header > div:first-child { display: none; }
+        .viewing-history .transcript-export-btn { margin-left: 0; }
+
+        /* Typographie du texte fluide en lecture — plus grand et plus aéré
+           que la version live pour lire confortablement. */
+        .viewing-history .transcript-flowing-text {
+            font-size: 1rem;
+            line-height: 1.75;
+            margin: 0.35em 0;
+            color: var(--text-primary);
+        }
+
+        /* Bulles (mode discussion IA) : conservent leur look mais dans le
+           conteneur transparent, plus aérées. */
+        .viewing-history #transcript .transcript-msg {
+            padding: 12px 16px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        .viewing-history #transcript .transcript-msg .sender {
+            font-size: 0.68rem;
+            margin-bottom: 4px;
+        }
+        .viewing-history-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-left: 6px;
+        }
+        .conv-item-date {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+        .sidebar-empty {
+            padding: 18px 16px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            font-style: italic;
+        }
+
+        .transcript-empty {
+            color: var(--text-muted);
+            font-style: italic;
+            font-size: 0.85rem;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .transcript-msg {
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 0.88rem;
+            line-height: 1.5;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .transcript-msg.user {
+            background: var(--transcript-user);
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .transcript-msg.ai {
+            background: var(--transcript-ai);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .transcript-msg .sender {
+            font-weight: 600;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 3px;
+            opacity: 0.6;
+        }
+
+        .transcript-msg.user .sender { color: var(--accent); }
+        .transcript-msg.ai .sender { color: var(--accent2); }
+
+        /*
+           Le mode transcripteur réutilise TOUTE l'infrastructure visuelle
+           du mode conversation (orb central + wave + boutons pill) — seul
+           l'usage change : pas d'IA, on transcrit le micro utilisateur en
+           continu. L'orb réagit au niveau du micro (dans drawAIOrb, via
+           le flag isTranscripteurMode), la wave déjà utilisateur, et la
+           transcription s'affiche en texte fluide (paragraphes) dans la
+           même zone que le layout compact.
+        */
+

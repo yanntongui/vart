@@ -2,11 +2,16 @@
 
 Assistant vocal d'apprentissage, HTML/CSS/JS vanilla, aucun framework, aucun
 backend. **`vart.html` est un ARTEFACT GÉNÉRÉ** : la source de vérité est le
-dossier `src/` (59 modules), assemblée par `node scripts/build.js`.
+dossier `src/` (80 modules), assemblée par `node scripts/build.js`.
 
     npm run build    # src/ → vart.html      concaténation pure, ~50 ms
     npm run check    # dérive, syntaxe, garde-fous file://, conventions
     npm run shots    # 7 captures Playwright de non-régression visuelle
+
+⚠️ **Ne lancez jamais deux de ces scripts en parallèle** : `build`, `check` et
+`resplit` lisent puis réécrivent `src/manifest.json` et `vart.html`. Deux
+exécutions simultanées se marchent dessus (course sur le manifeste → état
+incohérent). Toujours séquentiellement.
 
 @PLAN-VART.md — lire AVANT toute modification. C'est le plan directeur.
 
@@ -21,11 +26,17 @@ puis lancez `npm run build`. `npm run check` **échoue** si le fichier généré
 - `src/index.template.html` — coquille HTML avec les marqueurs `@@STYLES@@` et
   `@@SCRIPTS@@`. Contient tout le `<head>`, le `<body>` statique, la balise
   `<script>` unique et la balise pdf.js du CDN.
-- `src/styles/` — 8 feuilles CSS. `90-surcharge-apple.css` **doit rester la
+- `src/styles/` — 25 feuilles CSS. `90-surcharge-apple.css` **doit rester la
   dernière** (calque de surcharge, il gagne à spécificité égale).
-- `src/js/` — 51 modules numérotés `00-` à `50-`, dans l'ordre d'exécution.
+- `src/js/` — 55 modules numérotés `00-` à `50-`, dans l'ordre d'exécution.
+- **Sous-numérotation `44a`, `44b`, `44c`…** : un module découpé en 2e niveau
+  garde son numéro et reçoit un suffixe alphabétique, pour ne pas avoir à
+  renuméroter tous les modules suivants.
+- `scripts/resplit.js` — découpage de 2e niveau d'un module : découpe, met à
+  jour le manifeste, puis **exige** que `vart.html` reste identique à la
+  référence ; sinon il annule tout (rollback automatique).
 - `_baseline/vart-avant-modules.html` — original d'avant découpage (rollback).
-- `kast v2.1.html` — ancêtre Kast, inchangé.
+- `kast v2.1.html` — ancêtre Kast, inchangé, **hors dépôt git** (ancien branding).
 
 ### Pourquoi des scripts concaténés et pas des ES modules
 Vérifié au banc d'essai (Playwright, `file://`) :
@@ -158,3 +169,19 @@ global — vérifié au banc d'essai Playwright. La découpe est prouvée sans p
 file://, conventions, ordre du calque Apple). Rollback : `_baseline/`.
 Les 3 plus gros modules restants : 60-editeurs-config.css (2192 l.),
 40-orb-transcript.css (982 l.), 50-modes-lecture.css (706 l.).
+DÉCOUPAGE DE 2e NIVEAU (24/09/2026, même demande) : les 5 plus gros modules
+scindés via le nouvel outil `scripts/resplit.js`. 60-editeurs-config.css
+(2192 l.) → 11 fichiers `60a`-`60k` (le plus gros tombe à 424 l.) ;
+40-orb-transcript.css (982 l.) → 5 (`40a`-`40e`) ; 50-modes-lecture.css
+(706 l.) → 4 (`50a`-`50d`) ; 44-vision.js (687 l.) → 3 (`44a` capture, `44b`
+stockage IndexedDB, `44c` UI) ; 38-sessions-openai.js (646 l.) → 3 (`38a`
+Realtime, `38b` GPT Live, `38c` xAI). Bilan : 59 → **80 modules**, plus gros
+module **2192 → 623 l.** ; les plages du manifeste couvrent toujours
+exactement 5569 l. (CSS) et 11168 l. (JS). Chaque étape reprouvée : vart.html
+identique à la baseline (911 583 octets, SHA 759962cc…). Deux incidents réels
+traités au passage : (1) `resplit.js` crashait sur la borne de fin exclusive
+(`lines[total]` undefined, corrigé) — c'est le **test d'échec volontaire** qui
+l'a révélé, pas le chemin nominal ; (2) lancer deux `resplit` **en parallèle**
+provoque une course sur `src/manifest.json` (entrées écrasées, état incohérent
+avec le disque) → verrou `.resplit.lock` ajouté, rollback prouvé sur échec
+forcé. **Ne jamais paralléliser `build`/`check`/`resplit`.**

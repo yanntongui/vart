@@ -1,0 +1,79 @@
+        /* FIN DE SESSION
+           Quand une conversation / traduction / transcription vient de se
+           terminer (classe `session-ended` posée par stopConversation(),
+           retirée par resetTranscript()), on révèle les boutons
+           Copier/Exporter pour récupérer le texte produit.
+
+           Placement : juste AU-DESSUS du bouton « Démarrer » (#connectBtn).
+           stopConversation() déplace la barre DANS .bottom-controls (le même
+           conteneur flex que le bouton principal) ; on passe ce conteneur en
+           colonne pour empiler [Copier/Exporter] puis [Démarrer]. Résultat
+           centré et aligné, identique quel que soit le layout. La barre est
+           remise à sa place d'origine par resetTranscript() / viewConversation().
+           :not(.is-running) + :not(.viewing-history) montent la spécificité
+           à (1,4,0) pour battre les règles de masquage ci-dessus et celle
+           du mode transcripteur. */
+        #conversationArea.session-ended:not(.is-running):not(.viewing-history) .bottom-controls {
+            flex-direction: column;
+            gap: 14px;
+        }
+        #conversationArea.session-ended:not(.is-running):not(.viewing-history) .transcript-header {
+            display: flex !important;
+            flex-wrap: wrap;
+            width: auto;
+            max-width: none;
+            margin: 0;
+            gap: 10px;
+            justify-content: center;
+        }
+        /* Le div-espaceur (flex:1) qui poussait les boutons à droite dans le
+           flux normal n'a plus lieu d'être ici. */
+        #conversationArea.session-ended:not(.is-running):not(.viewing-history) .transcript-header > div:first-child {
+            display: none;
+        }
+        /* Boutons assortis au bouton principal (.connect-btn) : même pilule
+           glass, en plus petit, pour un ensemble cohérent. On garde le texte
+           à pleine luminance et un survol par éclaircissement (pas de teinte
+           seule — lisible en daltonisme). */
+        #conversationArea.session-ended:not(.is-running):not(.viewing-history) .transcript-export-btn {
+            display: inline-flex !important;
+            margin-left: 0;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.03);
+            -webkit-backdrop-filter: blur(24px);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            font-size: 0.62rem;
+            font-weight: 500;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+        #conversationArea.session-ended:not(.is-running):not(.viewing-history) .transcript-export-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+        }
+        [data-theme="light"] #conversationArea.session-ended:not(.is-running):not(.viewing-history) .transcript-export-btn {
+            background: rgba(0, 0, 0, 0.03);
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        [data-theme="light"] #conversationArea.session-ended:not(.is-running):not(.viewing-history) .transcript-export-btn:hover {
+            background: rgba(0, 0, 0, 0.06);
+        }
+
+        /* Mode lecture d'une discussion sauvegardée : on cache tout l'audio/visualisation
+           ET tous les boutons de pilotage (rien à démarrer en lecture seule). */
+        .viewing-history #aiOrbWrap,
+        .viewing-history #userWaveWrap,
+        .viewing-history #userLiveText,
+        .viewing-history #aiLiveText,
+        .viewing-history #bottomMuteBtn,
+        .viewing-history .bottom-controls,
+        .viewing-history #status,
+        .viewing-history #controls,
+        .viewing-history #editPersonaBtn {
+            display: none !important;
+        }

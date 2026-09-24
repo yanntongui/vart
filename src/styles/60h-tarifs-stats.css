@@ -1,0 +1,178 @@
+        /* Les chiffres ne se coupent jamais (« 2 img. », « $0.15 ») : une
+           ligne coupée serait plus haute que ses voisines. Seul le nom, en
+           première colonne, peut passer à la ligne. */
+        .stats-table td:not(:first-child) { white-space: nowrap; }
+        /* Les périodes sont des libellés fixes et courts : ils tiennent sur une
+           ligne, ce qui garde les quatre lignes du tableau à la même hauteur. */
+        .stats-periods td:first-child { white-space: nowrap; }
+        .stats-table th {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .stats-total td {
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: none;
+        }
+        .stats-tabs {
+            display: flex;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+        .stats-tabs button {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+        .stats-tabs button.active {
+            background: var(--bg-active);
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .stats-tabs button:hover:not(.active) {
+            background: var(--bg-hover);
+        }
+        .stats-charts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .stats-chart-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+        .stats-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 0.78rem;
+        }
+        .stats-bar-label {
+            width: 70px;
+            text-align: right;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+        .stats-bar-track {
+            flex: 1;
+            height: 14px;
+            background: var(--bg-hover);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .stats-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            min-width: 2px;
+            transition: width 0.3s;
+        }
+        .stats-bar-value {
+            width: 55px;
+            text-align: left;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 900px) {
+            /* Sur mobile/tablette, le contenu occupe toute la largeur ; la
+               sidebar devient un tiroir superposé qui glisse depuis la gauche.
+               On anime `transform` (fiable et fluide, accéléré GPU) plutôt que
+               la largeur de la grille (interpolation fragile avec `1fr`).
+               Grille à UNE seule colonne : comme la sidebar passe en
+               `position: fixed` (hors flux), `#main` devient le seul enfant de
+               grille en flux et doit occuper toute la largeur — sinon il se
+               place dans une 1re colonne à 0px et la page paraît blanche. */
+            body,
+            body.sidebar-collapsed,
+            body.sidebar-mobile-open { grid-template-columns: 1fr; }
+
+            /* Le tiroir et sa poignée restent SOUS la couche des modales
+               (.modal-overlay = 200, dialogues = 300…) pour qu'une modale
+               ouverte les recouvre. Ils restent au-dessus du contenu (≤ 50)
+               et du fond d'obscurcissement (150). */
+            #sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 280px;
+                height: 100vh;
+                z-index: 160;
+                opacity: 1;
+                pointer-events: none;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                box-shadow: 2px 0 18px var(--shadow);
+            }
+            body.sidebar-mobile-open #sidebar {
+                transform: translateX(0);
+                pointer-events: auto;
+            }
+
+            #sidebarToggle { left: 0; border-left: 1px solid var(--border); z-index: 161; }
+            body.sidebar-mobile-open #sidebarToggle { left: 280px; border-left: none; }
+
+            /* Fond d'obscurcissement derrière le tiroir (tap pour fermer). */
+            #sidebarBackdrop {
+                display: block;
+                position: fixed;
+                inset: 0;
+                z-index: 150;
+                background: rgba(0, 0, 0, 0.45);
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease;
+            }
+            body.sidebar-mobile-open #sidebarBackdrop {
+                opacity: 1;
+                pointer-events: auto;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .viz-container canvas { max-width: 140px; }
+            #aiOrbWrap { height: 240px; border-radius: 18px; }
+            #userWaveWrap { height: 52px; }
+            #userLiveText { top: -18px; } /* recentrage propre au breakpoint mobile */
+            #conversationBody { padding: 16px 12px; gap: 14px; }
+            #personaHeader { padding: 16px 14px 8px; gap: 12px; }
+            #personaHeader #personaHeaderAvatar img,
+            #personaHeader .persona-header-placeholder,
+            #personaHeader .transcripteur-placeholder { width: 38px; height: 38px; }
+            .modal { padding: 1.2rem; width: 98vw; }
+            #personaHeaderName { font-size: 1.3rem; letter-spacing: 0.16em; }
+            #personaHeaderModel { font-size: 0.62rem; letter-spacing: 0.22em; }
+            .btn { padding: 11px 24px; font-size: 0.9rem; }
+            #sessionBar { flex-wrap: wrap; gap: 8px; font-size: 0.72rem; }
+            #emptyState { padding: 24px 14px; }
+            .welcome-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+            .welcome-card { padding: 18px 12px; }
+            .welcome-card-menu-btn { opacity: 1; }
+        }
+
+        /*
+           — classic : vue actuelle (orb avec texte IA superposé, texte user
+             centré entre la ligne d'onde et les boutons)
+           — compact : ligne d'onde remontée, texte IA + user en transcript
+             commun sous la ligne (utilise #transcript déjà peuplé)
+           — bubbles : ligne d'onde descendue, AI à gauche en bulle, user à
+             droite en bulle, démarrent AU-DESSUS de la ligne
+        */
+

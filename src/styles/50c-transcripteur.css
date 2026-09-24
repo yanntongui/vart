@@ -1,0 +1,191 @@
+        /* Avatar « T » du transcripteur — même forme (46 px rond) et même
+           accent bleu que les avatars persona, pas de gradient violet parasite. */
+        .transcripteur-placeholder {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+            font-size: 1.4rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            flex-shrink: 0;
+        }
+
+        /* Même variante dans la sidebar (persona-item) — round et --accent. */
+        .persona-item .transcripteur-sidebar-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+            font-size: 1.05rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        /* Mode transcripteur — layout minimal :
+             Header
+             │
+             Transcript (fill, dans le flow, avec fade top)
+             │
+             Wave (ligne horizontale)
+             │
+             Bouton pill
+           Pas d'orb, pas de layout switcher. */
+        .transcripteur-mode #userViz,
+        .transcripteur-mode #aiOrbWrap,
+        .transcripteur-mode #aiLiveText,
+        .transcripteur-mode #userLiveText {
+            display: none !important;
+        }
+
+        /* Ordre visuel en transcripteur (via flex `order`, pas de manip DOM) :
+           header → transcript (fill) → wave → boutons → status. Le DOM place
+           `#transcript` en dernier ; on l'avance visuellement pour qu'il
+           occupe la zone au-dessus de la ligne d'onde. */
+        .transcripteur-mode #personaHeader   { order: 0; }
+        .transcripteur-mode #transcript      { order: 1; }
+        .transcripteur-mode #userWaveWrap    { order: 2; }
+        .transcripteur-mode .bottom-controls { order: 3; }
+        .transcripteur-mode #status          { order: 4; }
+
+        /* Transcript dans le flow, occupe l'espace au-dessus de la wave.
+           Overrides !important pour battre les rules des layout-classic/compact/bubbles
+           au cas où une classe layout traînerait en localStorage. */
+        #conversationArea.transcripteur-mode:not(.viewing-history) .transcript-header {
+            display: none !important;
+        }
+        #conversationArea.transcripteur-mode:not(.viewing-history) #transcript {
+            display: flex !important;
+            flex-direction: column;
+            flex: 1;
+            position: static !important;
+            top: auto !important;
+            left: auto !important;
+            right: auto !important;
+            bottom: auto !important;
+            transform: none !important;
+            width: 100%;
+            max-width: 800px;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            margin: 0 auto;
+            padding: 44px 22px 24px;
+            gap: 6px;
+            background: transparent !important;
+            border: none !important;
+            overflow-y: auto;
+            /* padding-top ≥ hauteur du fondu (40px) : la 1re ligne reste sous le
+               dégradé quand on est tout en haut.
+               Masque dégradé en haut : les vieilles lignes s'estompent en
+               remontant au lieu d'être coupées net. */
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 40px, #000 100%);
+                    mask-image: linear-gradient(to bottom, transparent 0, #000 40px, #000 100%);
+        }
+        /* Le contenu se remplit depuis le HAUT — on ANNULE explicitement le
+           `margin-top: auto` que les layouts compact/bubbles collent sur le
+           premier enfant du transcript (leurs règles s'appliquent aussi en
+           transcripteur si le user avait sélectionné une de ces vues avant
+           d'entrer en mode transcripteur). !important pour battre ces règles. */
+        #conversationArea.transcripteur-mode:not(.viewing-history) #transcript > *:first-child {
+            margin-top: 0 !important;
+        }
+
+        /* Wave à sa position naturelle dans le flow, juste sous le transcript.
+           On annule le top: -25 hérité du layout par défaut pour éviter de
+           faire remonter la ligne dans le texte de la transcription. */
+        .transcripteur-mode #userWaveWrap {
+            top: 0 !important;
+        }
+
+        /* Cache le sélecteur de disposition dans le menu réglages en mode
+           transcripteur — les layouts classic/compact/bubbles n'ont aucun
+           sens ici, il n'y a qu'une seule vue. Le body reçoit la classe
+           `transcripteur-active` via selectTranscripteur() / showEmptyState(). */
+        body.transcripteur-active #settingsMenu [data-menu-group="layout"] {
+            display: none !important;
+        }
+        /* Et comme l'item « Paramètres du persona » est lui aussi caché dans ce
+           mode, le menu serait vide : on masque carrément le bouton ⚙. Le
+           moteur et la langue de transcription se règlent via la pilule sous
+           le titre (comme le Traducteur). */
+        body.transcripteur-active #settingsBtn { display: none !important; }
+
+        /* Style du texte fluide (paragraphes) dans la zone transcript. */
+        .transcript-flowing-text {
+            margin: 0.2em 0;
+            line-height: 1.7;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        .transcript-pause-separator {
+            border: none;
+            border-top: 1px dashed var(--text-muted);
+            margin: 12px 0;
+            opacity: 0.4;
+        }
+
+        .transcript-flowing-text .non-speech {
+            font-style: italic;
+            color: var(--text-muted);
+        }
+
+        .btn-pause {
+            background: none;
+            border: 2px solid var(--accent);
+            color: var(--accent);
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .btn-pause:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .btn-pause.paused {
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .btn-pause.paused:hover {
+            background: var(--success);
+            color: #fff;
+        }
+
+        /* Transcripteur — image carrée pleine, avec une icône de transcription
+           (document + lignes de texte) centrée sur un fond dégradé --accent
+           pour rester cohérent avec le reste de l'interface. */
+        .welcome-card .transcripteur-card-icon {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .welcome-card .transcripteur-card-icon svg {
+            width: 46%;
+            height: 46%;
+        }
+
